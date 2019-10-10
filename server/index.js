@@ -1,19 +1,8 @@
-const SerialPort = require('serialport');
+const projector = require('./projector');
 
-const port = new SerialPort('/dev/ttyACM0', { baudRate: 9600 });
-
-port.on('error', console.error);
-//port.on('data', (buffer) => console.log(`data: ${buffer}`));
-port.pipe(process.stdout)
-
-setTimeout(() => port.close(), 10e3);
+setTimeout(() => process.exit(), 10e3);
 //setTimeout(() => port.write('AF'), 6e3);
-setTimeout(() => {
-  port.write('AF\n', (err) => {
-    if (err) {
-      console.error(err);
-    } else {
-      console.log('written');
-    }
-  });
+setTimeout(async () => {
+  const idk = await projector.advanceFrame();
+  console.log('idk', idk);
 }, 4e3);
