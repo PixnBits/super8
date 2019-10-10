@@ -1,6 +1,5 @@
 const projector = require('./projector');
 
-//setTimeout(() => port.write('AF'), 6e3);
 setTimeout(async () => {
   try {
     await projector.advanceFrame();

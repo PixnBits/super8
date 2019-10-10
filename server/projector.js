@@ -8,35 +8,39 @@ var currentOperation = Promise.resolve();
 
 
 port.on('error', console.error);
-//port.on('data', (buffer) => console.log(`data: ${buffer}`));
-//port.pipe(process.stdout);
 
-async function advanceFrame() {
-  await currentOperation;
-
-  currentOperation = new Promise((res, rej) => {
-    port.write('AF\n', (err) => {
+function writeLineToPort(str) {
+  return new Promise((res, rej) => {
+    port.write(`${str}\n`, (err) => {
       if (err) {
         return rej(err);
       }
-
-      // wait for MOTION_STOPPED or MOTORS_DISABLED
-      dataCallback = (lineString) => {
-        switch (lineString) {
-          case 'ADVANCE_FRAME_STARTED':
-            console.log('advanceFrame started');
-            break;
-          case 'MOTION_STOPPED':
-          case 'MOTORS_DISABLED':
-            portLines.removeListener('data', dataCallback);
-            return res();
-        }
-
-      };
-
-      portLines.on('data', dataCallback);
-    })
+      res();
   });
+}
+
+// any of the lines, not all of the lines
+// TODO: rename this function name to be less ambiguous
+function waitForPortLines(...lines) {
+  return new Promise((res) => {
+    dataCallback = (lineString) => {
+      if (!lines.includes(lineString)) {
+        return;
+      }
+      portLines.removeListener('data', dataCallback);
+      return res();
+    }
+
+    portLines.on('data', dataCallback);
+  });
+}
+
+async function advanceFrame() {
+  await currentOperation;
+  
+  currentOperation = Promise.resolve()
+    .then(() => writeLineToPort('AF'))
+    .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'));
 
   return currentOperation;
 }
