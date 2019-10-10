@@ -2,17 +2,17 @@ const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline')
 
 const port = new SerialPort('/dev/ttyACM0', { baudRate: 9600 });
-const portLines = port.pipe(new Readline());
+const portLines = port.pipe(new Readline({ delimiter: '\r\n' }));
 
 var currentOperation = Promise.resolve();
 
 
 port.on('error', console.error);
 //port.on('data', (buffer) => console.log(`data: ${buffer}`));
-port.pipe(process.stdout);
+//port.pipe(process.stdout);
 
 async function advanceFrame() {
-  await currentOperation();
+  await currentOperation;
 
   currentOperation = new Promise((res, rej) => {
     port.write('AF\n', (err) => {
@@ -41,6 +41,6 @@ async function advanceFrame() {
   return currentOperation;
 }
 
-export {
-  advanceFrame
+module.exports = {
+  advanceFrame,
 };

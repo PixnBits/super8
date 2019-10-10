@@ -1,8 +1,12 @@
 const projector = require('./projector');
 
-setTimeout(() => process.exit(), 10e3);
 //setTimeout(() => port.write('AF'), 6e3);
 setTimeout(async () => {
-  const idk = await projector.advanceFrame();
-  console.log('idk', idk);
+  try {
+    await projector.advanceFrame();
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setTimeout(() => process.exit(), 3e3);
+  }
 }, 4e3);
