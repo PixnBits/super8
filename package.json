@@ -1,0 +1,16 @@
+{
+  "name": "super8",
+  "version": "0.1.0-pre",
+  "description": "Interface to Arduino controlling a Super 8 projector for digitizing film",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "pixnbits",
+  "license": "MIT",
+  "dependencies": {
+    "@serialport/parser-readline": "^2.0.2",
+    "serialport": "^7.1.5"
+  }
+}
