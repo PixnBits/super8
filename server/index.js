@@ -3,7 +3,8 @@ const path = require('path');
 const fastify = require('fastify');
 const fastifyStatic = require('fastify-static');
 const fastifyWS = require('fastify-ws');
-const WebSocket = require('ws');
+
+const camera = require('./camera');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
 
@@ -16,6 +17,11 @@ httpServer.ready((err) => {
   }
 
   console.log(`server listening on ${HTTP_PORT}`);
+});
+
+// camera images
+httpServer.get('/frame.jpg', (request, reply) => {
+  reply.send(camera.getLatestFrame());
 });
 
 // static content
@@ -37,6 +43,7 @@ httpServer.ready((err) => {
 });
 
 // start
+camera.updateFramePeriodically(5);
 httpServer.listen(HTTP_PORT, '127.0.0.1');
 
 // const projector = require('./projector');

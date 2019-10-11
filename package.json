@@ -20,8 +20,8 @@
     "fastify": "^2.10.0",
     "fastify-static": "^2.5.0",
     "fastify-ws": "^1.0.3",
-    "serialport": "^7.1.5",
-    "ws": "^7.1.2"
+    "node-raspistill": "0.0.17",
+    "serialport": "^7.1.5"
   },
   "devDependencies": {
     "bootstrap": "^4.3.1",
