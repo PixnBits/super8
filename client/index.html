@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Super 8</title>
+  </head>
+  <body>
+    <h1>Super 8 Projector Control</h1>
+    <script type="text/javascript">
+      const ws = new WebSocket('ws://127.0.0.1:3000');
+
+      ws.addEventListener('open', function open() {
+        ws.send('from the client');
+      });
+
+      ws.addEventListener('message', function incoming(event) {
+        console.log('message', event.data);
+      });
+    </script>
+  </body>
+</html>
