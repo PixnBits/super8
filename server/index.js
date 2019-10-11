@@ -21,7 +21,9 @@ httpServer.ready((err) => {
 
 // camera images
 httpServer.get('/frame.jpg', (request, reply) => {
-  reply.send(camera.getLatestFrame());
+  reply
+    .type('image/jpeg')
+    .send(camera.getLatestFrame());
 });
 
 // static content
@@ -44,7 +46,7 @@ httpServer.ready((err) => {
 
 // start
 camera.updateFramePeriodically(5);
-httpServer.listen(HTTP_PORT, '127.0.0.1');
+httpServer.listen(HTTP_PORT, '0.0.0.0');
 
 // const projector = require('./projector');
 // setTimeout(async () => {

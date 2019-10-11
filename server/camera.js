@@ -18,12 +18,24 @@ function updateFrame() {
 }
 
 let updateFrameHandle = null;
-function updateFramePeriodically(interval = 5) {
+function cancelFrameTimeout() {
   if (updateFrameHandle) {
     clearTimeout(updateFrameHandle);
+    updateFrameHandle = null;
+    return true;
+  }
+  return false;
+}
+
+function updateFramePeriodically(interval = 5) {
+  cancelFrameTimeout();
+  if (interval <= 0) {
+    console.log('frame updated canceled');
+    return;
   }
 
   const intervalMS = interval * 1e3;
+  console.log(`changing frame updates to ${interval}s`)
 
   function timeoutUpdate() {
     updateFrame()
