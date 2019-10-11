@@ -1,54 +1,45 @@
-const http = require('http');
 const path = require('path');
 
-const static = require('node-static');
+const fastify = require('fastify');
+const fastifyStatic = require('fastify-static');
+const fastifyWS = require('fastify-ws');
 const WebSocket = require('ws');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
-// FIXME: switch the cache value based on NODE_ENV?
-const publicServer = new static.Server(path.resolve(__dirname, '../public'), { cache: 0 });
 
-const httpServer = http.createServer((req, res) => {
-  req
-    .addListener('end', () => console.log(`request ${req.method} ${req.url}`))
-    .addListener('end', () => publicServer.serve(req, res, (err, result) => {
-      if (!err) {
-        return;
-      }
+const httpServer = fastify({ logger: false });
 
-      // redirect when the file didn't exist
-      if (err.status === 404) {
-        console.log(`redirecting ${req.url} to /`);
-        res.writeHead(302, { 'Location': '/' });
-        res.end();
-        return;
-      }
-
-      console.error(`error serving ${req.url}`, err);
-      res.writeHead(err.status, err.headers);
-      res.end();
-    }))
-    .resume();
-});
-
-const webSocketServer = new WebSocket.Server({ server: httpServer });
-
-webSocketServer.on('connection', (webSocket) => {
-  console.log('new WebSocket connection');
-  webSocket.on('message', (message) => console.log('WebSocket message:', message));
-  setTimeout(() => webSocket.send('from the server'));
-});
-
-httpServer.listen(HTTP_PORT, '127.0.0.1', (err) => {
+httpServer.ready((err) => {
   if (err) {
     console.error('server unable to listen', err);
-  } else {
-    console.log(`server listening on ${HTTP_PORT}`);
+    throw err;
   }
-})
+
+  console.log(`server listening on ${HTTP_PORT}`);
+});
+
+// static content
+httpServer.register(fastifyStatic, { root: path.resolve(__dirname, '../public') });
+httpServer.setNotFoundHandler((req, reply) => reply.redirect('/'));
+
+// websockets for data communication
+httpServer.register(fastifyWS);
+httpServer.ready((err) => {
+  if (err) {
+    return;
+  }
+
+  httpServer.ws.on('connection', (webSocket) => {
+    console.log('new WebSocket connection');
+    webSocket.on('message', (message) => console.log('WebSocket message:', message));
+    setTimeout(() => webSocket.send('from the server'));
+  });
+});
+
+// start
+httpServer.listen(HTTP_PORT, '127.0.0.1');
 
 // const projector = require('./projector');
-
 // setTimeout(async () => {
 //   try {
 //     await projector.advanceFrame();

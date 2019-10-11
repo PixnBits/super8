@@ -17,7 +17,9 @@
   "license": "MIT",
   "dependencies": {
     "@serialport/parser-readline": "^2.0.2",
-    "node-static": "^0.7.11",
+    "fastify": "^2.10.0",
+    "fastify-static": "^2.5.0",
+    "fastify-ws": "^1.0.3",
     "serialport": "^7.1.5",
     "ws": "^7.1.2"
   },
