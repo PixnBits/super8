@@ -8,6 +8,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon -w server -x \"npm start\"",
     "dev:client": "parcel watch client/index.html --out-dir public",
+    "build": "rimraf public && parcel build client/index.html --out-dir public",
     "lint": "eslint ./server --ignore-path .gitignore --ext .js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,9 +21,11 @@
     "ws": "^7.1.2"
   },
   "devDependencies": {
+    "concurrently": "^5.0.0",
     "eslint": "^6.5.1",
     "eslint-config-amex": "^11.1.0",
     "nodemon": "^1.19.3",
-    "parcel-bundler": "^1.12.4"
+    "parcel-bundler": "^1.12.4",
+    "rimraf": "^3.0.0"
   }
 }
