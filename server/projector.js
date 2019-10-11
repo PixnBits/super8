@@ -35,16 +35,31 @@ function waitForPortLines(...lines) {
   });
 }
 
-async function advanceFrame() {
-  await currentOperation;
+function stop() {
+  currentOperation = currentOperation
+    .then(() => writeLineToPort('S'))
+    .then(() => waitForPortLines('MOTORS_DISABLED'));
 
-  currentOperation = Promise.resolve()
+  return currentOperation;
+}
+
+function advanceFrame() {
+  currentOperation = currentOperation
     .then(() => writeLineToPort('AF'))
     .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'));
 
   return currentOperation;
 }
 
+function advance() {
+  currentOperation = currentOperation
+    .then(() => writeLineToPort('A'));
+
+  return currentOperation;
+}
+
 module.exports = {
+  stop,
   advanceFrame,
+  advance,
 };
