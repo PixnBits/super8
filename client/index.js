@@ -1,10 +1,10 @@
-// host includes the port, hostname does not
-const ws = new WebSocket(`ws://${location.host}`);
+// https://parceljs.org/recipes.html#bootstrap-+-fontawesome
+import 'bootstrap/dist/css/bootstrap.css';
 
-ws.addEventListener('open', function open() {
-  ws.send('from the client');
-});
+import React from 'react';
+import reactDOM from 'react-dom';
 
-ws.addEventListener('message', function incoming(event) {
-  console.log('message', event.data);
-});
+import './comms.js';
+import App from './components/App.jsx';
+
+reactDOM.render(<App />, document.querySelector('main'));

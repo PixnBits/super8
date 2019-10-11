@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
+    "clean": "rimraf public",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon -w server -x \"npm start\"",
-    "dev:client": "parcel watch client/index.html --out-dir public",
-    "build": "rimraf public && parcel build client/index.html --out-dir public",
+    "dev:client": "npm run clean && parcel watch client/index.html --out-dir public",
+    "build": "npm run clean && parcel build client/index.html --out-dir public",
     "lint": "eslint ./server --ignore-path .gitignore --ext .js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,11 +22,15 @@
     "ws": "^7.1.2"
   },
   "devDependencies": {
+    "bootstrap": "^4.3.1",
     "concurrently": "^5.0.0",
     "eslint": "^6.5.1",
     "eslint-config-amex": "^11.1.0",
     "nodemon": "^1.19.3",
     "parcel-bundler": "^1.12.4",
-    "rimraf": "^3.0.0"
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "rimraf": "^3.0.0",
+    "sass": "^1.23.0"
   }
 }

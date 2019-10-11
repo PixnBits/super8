@@ -5,6 +5,7 @@ const static = require('node-static');
 const WebSocket = require('ws');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
+// FIXME: switch the cache value based on NODE_ENV?
 const publicServer = new static.Server(path.resolve(__dirname, '../public'), { cache: 0 });
 
 const httpServer = http.createServer((req, res) => {
@@ -34,7 +35,7 @@ const webSocketServer = new WebSocket.Server({ server: httpServer });
 
 webSocketServer.on('connection', (webSocket) => {
   console.log('new WebSocket connection');
-  webSocket.on('message', (message) => console.log('WebSocket message', message));
+  webSocket.on('message', (message) => console.log('WebSocket message:', message));
   setTimeout(() => webSocket.send('from the server'));
 });
 
