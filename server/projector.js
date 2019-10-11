@@ -1,11 +1,10 @@
 const SerialPort = require('serialport');
-const Readline = require('@serialport/parser-readline')
+const Readline = require('@serialport/parser-readline');
 
 const port = new SerialPort('/dev/ttyACM0', { baudRate: 9600 });
 const portLines = port.pipe(new Readline({ delimiter: '\r\n' }));
 
-var currentOperation = Promise.resolve();
-
+let currentOperation = Promise.resolve();
 
 port.on('error', console.error);
 
@@ -15,7 +14,8 @@ function writeLineToPort(str) {
       if (err) {
         return rej(err);
       }
-      res();
+      return res();
+    });
   });
 }
 
@@ -23,13 +23,13 @@ function writeLineToPort(str) {
 // TODO: rename this function name to be less ambiguous
 function waitForPortLines(...lines) {
   return new Promise((res) => {
-    dataCallback = (lineString) => {
+    const dataCallback = (lineString) => {
       if (!lines.includes(lineString)) {
         return;
       }
       portLines.removeListener('data', dataCallback);
-      return res();
-    }
+      res();
+    };
 
     portLines.on('data', dataCallback);
   });
@@ -37,7 +37,7 @@ function waitForPortLines(...lines) {
 
 async function advanceFrame() {
   await currentOperation;
-  
+
   currentOperation = Promise.resolve()
     .then(() => writeLineToPort('AF'))
     .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'));

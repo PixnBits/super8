@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
+    "lint": "eslint ./server --ignore-path .gitignore --ext .js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "pixnbits",
@@ -12,5 +13,9 @@
   "dependencies": {
     "@serialport/parser-readline": "^2.0.2",
     "serialport": "^7.1.5"
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "eslint-config-amex": "^11.1.0"
   }
 }
