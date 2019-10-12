@@ -16,9 +16,9 @@ ws.addEventListener('message', function incoming(event) {
   }
 
   if ('notification' in message) {
-    const event = new Event(event.notification);
-    event.notification = message;
-    notifications.dispatchEvent(event);
+    const notificationEvent = new Event(message.notification);
+    notificationEvent.notification = message;
+    notifications.dispatchEvent(notificationEvent);
   }
 });
 
