@@ -1,5 +1,6 @@
 import React from 'react';
 
+import FrameImage from './FrameImage';
 import comms from '../comms';
 
 const App = () => (
@@ -13,10 +14,7 @@ const App = () => (
     </header>
     <main>
       <p>Appy!</p>
-      <p>
-        video preview
-        <img src="/frame.jpg" />
-      </p>
+      <FrameImage />
       <p>
         Controls (Advance Frame, Advance, Stop)
         <button type="button" class="btn btn-danger" onClick={() => comms.stop()}>Stop</button>

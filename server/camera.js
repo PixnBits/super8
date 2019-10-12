@@ -1,4 +1,5 @@
 const { Raspistill } = require('node-raspistill');
+const { EventEmitter } = require('events');
 // const fs = require('fs');
 
 const raspistill = new Raspistill({
@@ -9,12 +10,17 @@ const raspistill = new Raspistill({
   height: 600,
 });
 
+const cameraEvents = new EventEmitter();
+
 let latestFrame = null;
 
 const getLatestFrame = () => latestFrame;
 
 function updateFrame() {
-  return raspistill.takePhoto().then((photo) => { latestFrame = photo; });
+  return raspistill.takePhoto().then((photo) => {
+    latestFrame = photo;
+    cameraEvents.emit('frame', photo);
+  });
 }
 
 let updateFrameHandle = null;
@@ -30,7 +36,7 @@ function cancelFrameTimeout() {
 function updateFramePeriodically(interval = 5) {
   cancelFrameTimeout();
   if (interval <= 0) {
-    console.log('frame updated canceled');
+    console.log('frame update canceled');
     return;
   }
 
@@ -49,4 +55,7 @@ function updateFramePeriodically(interval = 5) {
 module.exports = {
   getLatestFrame,
   updateFramePeriodically,
+  addListener: (...args) => cameraEvents.addListener(...args),
+  addOnceListener: (...args) => cameraEvents.once(...args),
+  removeListener: (...args) => cameraEvents.removeListener(...args),
 };
