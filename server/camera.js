@@ -35,7 +35,7 @@ function updateFramePeriodically(interval = 5) {
   }
 
   const intervalMS = interval * 1e3;
-  console.log(`changing frame updates to ${interval}s`)
+  console.log(`changing frame updates to ${interval}s`);
 
   function timeoutUpdate() {
     updateFrame()

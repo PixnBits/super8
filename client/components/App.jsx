@@ -1,5 +1,7 @@
 import React from 'react';
 
+import comms from '../comms';
+
 const App = () => (
   <>
     <header>
@@ -15,7 +17,12 @@ const App = () => (
         video preview
         <img src="/frame.jpg" />
       </p>
-      <p>Controls (Advance Frame, Advance, Stop)</p>
+      <p>
+        Controls (Advance Frame, Advance, Stop)
+        <button type="button" class="btn btn-danger" onClick={() => comms.stop()}>Stop</button>
+        <button type="button" class="btn btn-primary" onClick={() => comms.advanceFrame()}>Advance Frame</button>
+        <button type="button" class="btn btn-secondary" onClick={() => comms.advance()}>Advance</button>
+      </p>
     </main>
   </>
 );

@@ -4,6 +4,7 @@ const fastify = require('fastify');
 const fastifyStatic = require('fastify-static');
 const fastifyWS = require('fastify-ws');
 
+const setupComms = require('./comms');
 const camera = require('./camera');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
@@ -37,29 +38,9 @@ httpServer.ready((err) => {
     return;
   }
 
-  httpServer.ws.on('connection', (webSocket) => {
-    console.log('new WebSocket connection');
-    webSocket.on('message', (message) => console.log('WebSocket message:', message));
-    setTimeout(() => webSocket.send('from the server'));
-  });
+  setupComms(httpServer.ws);
 });
 
 // start
 camera.updateFramePeriodically(5);
 httpServer.listen(HTTP_PORT, '0.0.0.0');
-
-// const projector = require('./projector');
-// setTimeout(async () => {
-//   try {
-//     await projector.advanceFrame();
-//     console.log('1');
-//     await projector.advanceFrame();
-//     console.log('2');
-//     await projector.advanceFrame();
-//     console.log('3');
-//   } catch (err) {
-//     console.error(err);
-//   } finally {
-//     setTimeout(() => process.exit(), 3e3);
-//   }
-// }, 4e3);
