@@ -21,10 +21,11 @@ httpServer.ready((err) => {
 });
 
 // camera images
+// TODO: handle different encodings
 httpServer.get('/frame.jpg', (request, reply) => {
   reply
     .type('image/jpeg')
-    .send(camera.getLatestFrame());
+    .send(camera.getLatestFrame().photo);
 });
 
 // static content

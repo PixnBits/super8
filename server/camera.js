@@ -15,7 +15,7 @@ const cameraEvents = new EventEmitter();
 
 let latestFrame = null;
 
-const getLatestFrame = () => latestFrame;
+const getLatestFrame = () => ({ photo: latestFrame, encoding });
 
 function updateFrame() {
   return raspistill.takePhoto().then((photo) => {

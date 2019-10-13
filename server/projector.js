@@ -75,7 +75,7 @@ function advance() {
   return currentOperation;
 }
 
-function captureFrame() {
+function saveFrame() {
   // we need the projector to hold still while we capture the frame
   // but the projector can move while we save to disk
   // so the current (projector) operation doesn't need to include the fs op
@@ -84,7 +84,7 @@ function captureFrame() {
 
   const getFrameChain = currentOperation
     .then(() => projectorEvents.emit('busy'))
-    .then(() => camera.updateFrame());
+    .then(() => camera.getLatestFrame());
 
   currentOperation = getFrameChain
     .then(() => projectorEvents.emit('idle'));
@@ -102,7 +102,7 @@ module.exports = {
   stop,
   advanceFrame,
   advance,
-  captureFrame,
+  saveFrame,
   // captureAndAdvance,
   // eventing
   addListener: (...args) => projectorEvents.addListener(...args),
