@@ -92,7 +92,7 @@ function saveFrame() {
   return getFrameChain.then(({ photo, encoding }) => {
     // save photo to filesystem
     const filename = `frame-${Date.now()}.${encoding}`;
-    const filePath = path.resolve(path.join('/home/pi/Photos', filename));
+    const filePath = path.resolve(path.join('/home/pi/Pictures', filename));
     return fsp.writeFile(filePath, photo, { encoding: 'binary' })
       .then(() => filePath);
   });
