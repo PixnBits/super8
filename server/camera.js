@@ -1,9 +1,11 @@
 const { Raspistill } = require('node-raspistill');
 const { EventEmitter } = require('events');
 
+const encoding = 'jpg';
+
 const raspistill = new Raspistill({
   noFileSave: true,
-  encoding: 'jpg',
+  encoding,
   // defaults to max, 3280 x 2464
   width: 800,
   height: 600,
@@ -19,6 +21,7 @@ function updateFrame() {
   return raspistill.takePhoto().then((photo) => {
     latestFrame = photo;
     cameraEvents.emit('frame', photo);
+    return { photo, encoding };
   });
 }
 
