@@ -14,6 +14,8 @@ const raspistill = new Raspistill({
 const cameraEvents = new EventEmitter();
 
 let latestFrame = null;
+let updateFrameHandle = null;
+let lastPeriodicInterval = 5;
 
 const getLatestFrame = () => ({ photo: latestFrame, encoding });
 
@@ -25,7 +27,19 @@ function updateFrame() {
   });
 }
 
-let updateFrameHandle = null;
+function captureFrame() {
+  cancelFrameTimeout();
+  const updateFrameChain = updateFrame();
+
+  updateFrameChain
+    .catch((err) => {
+      console.error(err);
+      restartFrameTimeout();
+    });
+
+  return updateFrameChain;
+}
+
 function cancelFrameTimeout() {
   if (updateFrameHandle) {
     clearTimeout(updateFrameHandle);
@@ -35,6 +49,10 @@ function cancelFrameTimeout() {
   return false;
 }
 
+function restartFrameTimeout() {
+  updateFramePeriodically(lastPeriodicInterval);
+}
+
 function updateFramePeriodically(interval = 5) {
   cancelFrameTimeout();
   if (interval <= 0) {
@@ -42,6 +60,7 @@ function updateFramePeriodically(interval = 5) {
     return;
   }
 
+  lastPeriodicInterval = interval;
   const intervalMS = interval * 1e3;
   console.log(`changing frame updates to ${interval}s`);
 
@@ -57,6 +76,8 @@ function updateFramePeriodically(interval = 5) {
 module.exports = {
   getLatestFrame,
   updateFramePeriodically,
+  captureFrame,
+  // eventing
   addListener: (...args) => cameraEvents.addListener(...args),
   addOnceListener: (...args) => cameraEvents.once(...args),
   removeListener: (...args) => cameraEvents.removeListener(...args),

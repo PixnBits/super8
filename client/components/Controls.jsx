@@ -20,7 +20,7 @@ function Controls() {
       <button type="button" class="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
       <button type="button" class="btn btn-danger" onClick={() => comms.stop()}>Stop</button>
       <button type="button" class="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
-      <button type="button" class="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.saveFrame()}>Save Frame</button>
+      <button type="button" class="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
       <button type="button" class="btn btn-secondary" disabled={isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
     </p>
   );

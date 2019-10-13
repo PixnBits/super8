@@ -75,7 +75,7 @@ function advance() {
   return currentOperation;
 }
 
-function saveFrame() {
+function captureFrame() {
   // we need the projector to hold still while we capture the frame
   // but the projector can move while we save to disk
   // so the current (projector) operation doesn't need to include the fs op
@@ -102,7 +102,7 @@ module.exports = {
   stop,
   advanceFrame,
   advance,
-  saveFrame,
+  captureFrame,
   // captureAndAdvance,
   // eventing
   addListener: (...args) => projectorEvents.addListener(...args),

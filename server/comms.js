@@ -17,8 +17,8 @@ function handleClientMessage(rawMessage) {
     case 'advanceFrame':
       projector.advanceFrame();
       return;
-    case 'saveFrame':
-      projector.saveFrame();
+    case 'captureFrame':
+      projector.captureFrame();
       return;
     case 'advance':
       projector.advance();

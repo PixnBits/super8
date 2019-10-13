@@ -40,8 +40,8 @@ function advanceFrame() {
   sendCommand('advanceFrame');
 }
 
-function saveFrame() {
-  sendCommand('saveFrame');
+function captureFrame() {
+  sendCommand('captureFrame');
 }
 
 function advance() {
@@ -52,7 +52,7 @@ module.exports = {
   captureAndAdvance,
   stop,
   advanceFrame,
-  saveFrame,
+  captureFrame,
   advance,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
