@@ -28,6 +28,10 @@ function sendCommand(procedure, args) {
   ws.send(JSON.stringify({ procedure, args }));
 }
 
+function captureAndAdvance() {
+  sendCommand('captureAndAdvance');
+}
+
 function stop() {
   sendCommand('stop');
 }
@@ -36,13 +40,19 @@ function advanceFrame() {
   sendCommand('advanceFrame');
 }
 
+function captureFrame() {
+  sendCommand('captureFrame');
+}
+
 function advance() {
   sendCommand('advance');
 }
 
 module.exports = {
+  captureAndAdvance,
   stop,
   advanceFrame,
+  captureFrame,
   advance,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),

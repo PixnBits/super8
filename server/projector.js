@@ -1,8 +1,12 @@
+const { EventEmitter } = require('events');
+
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 
 const port = new SerialPort('/dev/ttyACM0', { baudRate: 9600 });
 const portLines = port.pipe(new Readline({ delimiter: '\r\n' }));
+
+const projectorEvents = new EventEmitter();
 
 let currentOperation = Promise.resolve();
 
@@ -38,21 +42,25 @@ function waitForPortLines(...lines) {
 function stop() {
   currentOperation = currentOperation
     .then(() => writeLineToPort('S'))
-    .then(() => waitForPortLines('MOTORS_DISABLED'));
+    .then(() => waitForPortLines('MOTORS_DISABLED'))
+    .then(() => projectorEvents.emit('idle'));
 
   return currentOperation;
 }
 
 function advanceFrame() {
   currentOperation = currentOperation
+    .then(() => projectorEvents.emit('busy'))
     .then(() => writeLineToPort('AF'))
-    .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'));
+    .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'))
+    .then(() => projectorEvents.emit('idle'));
 
   return currentOperation;
 }
 
 function advance() {
   currentOperation = currentOperation
+    .then(() => projectorEvents.emit('busy'))
     .then(() => writeLineToPort('A'));
 
   return currentOperation;
@@ -62,4 +70,8 @@ module.exports = {
   stop,
   advanceFrame,
   advance,
+  // eventing
+  addListener: (...args) => projectorEvents.addListener(...args),
+  addOnceListener: (...args) => projectorEvents.once(...args),
+  removeListener: (...args) => projectorEvents.removeListener(...args),
 };

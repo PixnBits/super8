@@ -1,6 +1,5 @@
 const { Raspistill } = require('node-raspistill');
 const { EventEmitter } = require('events');
-// const fs = require('fs');
 
 const raspistill = new Raspistill({
   noFileSave: true,

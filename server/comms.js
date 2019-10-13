@@ -17,15 +17,37 @@ function handleClientMessage(rawMessage) {
     case 'advanceFrame':
       projector.advanceFrame();
       return;
+    // case 'captureFrame':
+    //   projector.captureFrame();
+    //   return;
     case 'advance':
       projector.advance();
       return;
+    // case 'captureAndAdvance':
+    //   projector.captureAndAdvance();
+    //   return;
     default:
       console.warn(`unknown procedure "${message.procedure}"`, message);
   }
 }
 
 function setupComms(webSocketServer) {
+  let busyOperationName = false; // false for idle
+
+  projector.addListener('idle', () => {
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      clientWebSocket.send(JSON.stringify({ notification: 'idle' }));
+    });
+    busyOperationName = false;
+  });
+
+  projector.addListener('busy', (operationName) => {
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      clientWebSocket.send(JSON.stringify({ notification: 'busy', operationName }));
+    });
+    busyOperationName = operationName;
+  });
+
   webSocketServer.on('connection', (webSocket) => {
     console.log('new WebSocket connection');
     // TODO: ping-pong to avoid keeping closed connections
@@ -35,6 +57,10 @@ function setupComms(webSocketServer) {
     const sendFrameNotification = () => webSocket.send(JSON.stringify({ notification: 'frame' }));
     webSocket.on('close', () => camera.removeListener('frame', sendFrameNotification));
     camera.addListener('frame', sendFrameNotification);
+    // TODO: DRY up idle/busy notifications
+    webSocket.send(JSON.stringify(
+      busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
+    ));
   });
 }
 
