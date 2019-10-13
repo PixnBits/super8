@@ -23,9 +23,9 @@ function handleClientMessage(rawMessage) {
     case 'advance':
       projector.advance();
       return;
-    // case 'captureAndAdvance':
-    //   projector.captureAndAdvance();
-    //   return;
+    case 'captureAndAdvance':
+      projector.captureAndAdvance();
+      return;
     default:
       console.warn(`unknown procedure "${message.procedure}"`, message);
   }

@@ -75,7 +75,8 @@ function advance() {
   return currentOperation;
 }
 
-function captureFrame() {
+// skipBusyIdleNotifications means the calling function whill handle those manually
+function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
   // we need the projector to hold still while we capture the frame
   // but the projector can move while we save to disk
   // so the current (projector) operation doesn't need to include the fs op
@@ -83,19 +84,38 @@ function captureFrame() {
   // (too many photos build up due to fs being slower than the stepper motor)
 
   const getFrameChain = currentOperation
-    .then(() => projectorEvents.emit('busy'))
+    .then(() => {
+      if (!skipBusyIdleNotifications) {
+        projectorEvents.emit('busy');
+      }
+    })
     .then(() => camera.getLatestFrame());
 
   currentOperation = getFrameChain
-    .then(() => projectorEvents.emit('idle'));
+    .then(() => {
+      if (!skipBusyIdleNotifications) {
+        projectorEvents.emit('idle');
+      }
+    });
 
   return getFrameChain.then(({ photo, encoding }) => {
     // save photo to filesystem
-    const filename = `frame-${Date.now()}.${encoding}`;
+    const filename = `frame-${frameIdentifier || Date.now()}.${encoding}`;
     const filePath = path.resolve(path.join('/home/pi/Pictures', filename));
     return fsp.writeFile(filePath, photo, { encoding: 'binary' })
       .then(() => filePath);
   });
+}
+
+function captureAndAdvance(frameNumber = 0) {
+  // avoid emitting every capture, advance
+  if (frameNumber === 0) {
+    projectorEvents.emit('busy');
+  }
+
+  captureFrame(`${frameNumber}`, true)
+    .then(() => advanceFrame())
+    .then(() => captureAndAdvance(frameNumber + 1));
 }
 
 module.exports = {
@@ -103,7 +123,7 @@ module.exports = {
   advanceFrame,
   advance,
   captureFrame,
-  // captureAndAdvance,
+  captureAndAdvance,
   // eventing
   addListener: (...args) => projectorEvents.addListener(...args),
   addOnceListener: (...args) => projectorEvents.once(...args),
