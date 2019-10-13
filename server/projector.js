@@ -18,6 +18,7 @@ const portLines = port.pipe(new Readline({ delimiter: '\r\n' }));
 const projectorEvents = new EventEmitter();
 
 let currentOperation = Promise.resolve();
+let needToStopCaptureAndAdvance = false;
 
 port.on('error', console.error);
 
@@ -49,6 +50,8 @@ function waitForPortLines(...lines) {
 }
 
 function stop() {
+  needToStopCaptureAndAdvance = true;
+
   currentOperation = currentOperation
     .then(() => writeLineToPort('S'))
     .then(() => waitForPortLines('MOTORS_DISABLED'))
@@ -111,11 +114,17 @@ function captureAndAdvance(frameNumber = 0) {
   // avoid emitting every capture, advance
   if (frameNumber === 0) {
     projectorEvents.emit('busy');
+    needToStopCaptureAndAdvance = false;
   }
 
   captureFrame(`${frameNumber}`, true)
     .then(() => advanceFrame())
-    .then(() => captureAndAdvance(frameNumber + 1));
+    .then(() => {
+      if (needToStopCaptureAndAdvance) {
+        return null;
+      }
+      return captureAndAdvance(frameNumber + 1);
+    });
 }
 
 module.exports = {
