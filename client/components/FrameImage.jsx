@@ -10,11 +10,7 @@ function FrameImage() {
       // (if >1 component they may use different URLs, loading the same data
       // multiple times)
       const newSrc = `/frame.jpg?t=${Date.now()}`;
-      // first load the image, then show it
-      const img = new Image();
-      img.onload = () => setImgSrc(newSrc);
-      // if there's an error not sure it'd be helpful to change the image
-      img.src = newSrc;
+      setImgSrc(newSrc);
     };
     comms.addEventListener('frame', listener);
     return () => comms.removeEventListener('frame', listener);
