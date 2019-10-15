@@ -17,7 +17,7 @@ function FrameImage() {
   });
   return (
     <p>
-      <img className="img-fluid" src={imgSrc} />
+      <img className="img-fluid" src={imgSrc} alt="The Super 8 film as seen by the camera" />
     </p>
   );
 }

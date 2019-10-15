@@ -1,13 +1,13 @@
 // host includes the port, hostname does not
-const ws = new WebSocket(`ws://${location.host}`);
+const ws = new WebSocket(`ws://${window.location.host}`);
 
 const notifications = new EventTarget();
 
 // TODO: handle state updates
-ws.addEventListener('message', function incoming(event) {
+ws.addEventListener('message', (event) => {
   console.log('message:', event.data);
 
-  var message;
+  let message;
   try {
     message = JSON.parse(event.data);
   } catch (err) {

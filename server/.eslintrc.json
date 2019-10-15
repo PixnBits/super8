@@ -1,1 +1,6 @@
-{ "extends": "amex" }
+{
+  "rules": {
+    // server code logs to STDOUT/STDERR
+    "no-console": 0
+  }
+}

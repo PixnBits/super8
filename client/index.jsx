@@ -4,8 +4,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 import React from 'react';
 import reactDOM from 'react-dom';
 
-import './comms.js';
-import App from './components/App.jsx';
+import './comms';
+import App from './components/App';
 
 /*
  "Warning: render(): Rendering components directly into document.body is

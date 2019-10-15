@@ -35,7 +35,7 @@ function Controls() {
 
   // TODO: debounce calls to comm.setContrast & setSaturation
   return (
-    <>
+    <React.Fragment>
       <p>
         <button type="button" className="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
         <button type="button" className="btn btn-danger" onClick={() => comms.stop()}>Stop</button>
@@ -44,20 +44,44 @@ function Controls() {
         <button type="button" className="btn btn-secondary" disabled={isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
       </p>
       <p>
-        <label>
+        <label htmlFor="contrast-setting">
           Contrast:
-          <input type="number" min="-100" max="100" step="1" value={contrast} onChange={(event) => comms.setContrast(event.target.value)}/>
+          <input
+            id="contrast-setting"
+            type="number"
+            min="-100"
+            max="100"
+            step="1"
+            value={contrast}
+            onChange={(event) => comms.setContrast(event.target.value)}
+          />
         </label>
-        <label>
+        <label htmlFor="saturation-setting">
           Saturation
-          <input type="number" min="-100" max="100" step="1" value={saturation} onChange={(event) => comms.setSaturation(event.target.value)}/>
+          <input
+            id="saturation-setting"
+            type="number"
+            min="-100"
+            max="100"
+            step="1"
+            value={saturation}
+            onChange={(event) => comms.setSaturation(event.target.value)}
+          />
         </label>
-        <label>
+        <label htmlFor="brightness-setting">
           Brightness
-          <input type="number" min="0" max="100" step="1" value={brightness} onChange={(event) => comms.setBrightness(event.target.value)}/>
+          <input
+            id="brightness-setting"
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            value={brightness}
+            onChange={(event) => comms.setBrightness(event.target.value)}
+          />
         </label>
       </p>
-    </>
+    </React.Fragment>
   );
 }
 

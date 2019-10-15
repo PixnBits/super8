@@ -4,7 +4,7 @@ import FrameImage from './FrameImage';
 import Controls from './Controls';
 
 const App = () => (
-  <>
+  <React.Fragment>
     <header>
       <div className="navbar navbar-dark bg-dark shadow-sm">
         <div className="container d-flex justify-content-between">
@@ -16,7 +16,7 @@ const App = () => (
       <Controls />
       <FrameImage />
     </main>
-  </>
+  </React.Fragment>
 );
 
 export default App;

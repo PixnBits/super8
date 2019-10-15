@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        // as the code includes both client and server, only what the server
+        // needs to run should be a dep, all the client-only deps should be
+        // devDeps to avoid being on disk when the server is running, esp. as
+        // the client code is compiled
+        "devDependencies": true,
+        "optionalDependencies": false,
+        "peerDependencies": false
+      }
+    ]
+  }
+}

@@ -10,7 +10,7 @@
     "dev:server": "nodemon -w server -x \"npm start\"",
     "dev:client": "npm run clean && parcel watch client/index.html --out-dir public",
     "build": "npm run clean && parcel build client/index.html --out-dir public",
-    "lint": "eslint ./server --ignore-path .gitignore --ext .js",
+    "lint": "eslint ./ --ignore-path .gitignore --ext .js,.jsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "pixnbits",
