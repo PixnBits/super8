@@ -65,10 +65,8 @@ function captureFrame() {
   const updateFrameChain = updateFrame();
 
   updateFrameChain
-    .catch((err) => {
-      console.error(err);
-      restartFrameTimeout();
-    });
+    .catch((err) => console.error(err))
+    .then(() => restartFrameTimeout());
 
   return updateFrameChain;
 }
