@@ -1,7 +1,7 @@
 {
   "name": "super8",
   "version": "0.1.0-pre",
-  "description": "Interface to Arduino controlling a Super 8 projector for digitizing film",
+  "description": "Digitizing Super 8 film frames.",
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
