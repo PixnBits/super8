@@ -21,6 +21,7 @@ function handleClientMessage(rawMessage) {
 
     case 'setContrast':
     case 'setSaturation':
+    case 'setBrightness':
       if (!Array.isArray(message.args)) {
         console.warn(`${message.procedure} requires arguments`);
       } else {

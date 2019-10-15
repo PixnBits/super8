@@ -6,6 +6,7 @@ function Controls() {
   const [isProjectorBusy, setBusyState] = useState(false);
   const [contrast, setContrastState] = useState(0);
   const [saturation, setSaturationState] = useState(0);
+  const [brightness, setBrightnessState] = useState(50);
   useEffect(() => {
     const busyListener = () => setBusyState(true);
     const idleListener = () => setBusyState(false);
@@ -17,6 +18,9 @@ function Controls() {
       }
       if ('saturation' in settings) {
         setSaturationState(settings.saturation);
+      }
+      if ('brightness' in settings) {
+        setBrightnessState(settings.brightness);
       }
     };
     comms.addEventListener('busy', busyListener);
@@ -47,6 +51,10 @@ function Controls() {
         <label>
           Saturation
           <input type="number" min="-100" max="100" step="1" value={saturation} onChange={(event) => comms.setSaturation(event.target.value)}/>
+        </label>
+        <label>
+          Brightness
+          <input type="number" min="0" max="100" step="1" value={brightness} onChange={(event) => comms.setBrightness(event.target.value)}/>
         </label>
       </p>
     </>

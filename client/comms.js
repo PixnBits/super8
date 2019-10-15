@@ -56,6 +56,9 @@ function setContrast(contrast) {
 function setSaturation(saturation) {
   sendCommand('setSaturation', [saturation]);
 }
+function setBrightness(brightness) {
+  sendCommand('setBrightness', [brightness]);
+}
 
 module.exports = {
   captureAndAdvance,
@@ -65,6 +68,7 @@ module.exports = {
   advance,
   setContrast,
   setSaturation,
+  setBrightness,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
   removeEventListener: (...args) => notifications.removeEventListener(...args),

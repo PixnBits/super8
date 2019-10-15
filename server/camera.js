@@ -16,8 +16,8 @@ const defaultCameraOptions = {
 const userCameraOptions = {
   // (-100 ... 100). If undefined - raspistill util use contrast 0 value
   contrast: 0,
-  // 50 is the default
-  // brightness: 50,
+  // 50 is the default, 0 to 100 per raspistill binary
+  brightness: 50,
   // (-100 ... 100). Raspistill util uses 0 value if undefined
   saturation: 0,
 };
@@ -71,6 +71,17 @@ function setSaturation(targetSaturation) {
   setOptions();
 }
 
+function setBrightness(targetBrightness) {
+  if (!isNumber) {
+    throw new Error('brightness must be a number');
+  }
+  if (targetBrightness > 100 || targetBrightness < 0) {
+    throw new Error('brightness must be between 0 and 100');
+  }
+  userCameraOptions.brightness = targetBrightness;
+  setOptions();
+}
+
 function cancelFrameTimeout() {
   if (updateFrameHandle) {
     clearTimeout(updateFrameHandle);
@@ -121,6 +132,7 @@ module.exports = {
   captureFrame,
   setContrast,
   setSaturation,
+  setBrightness,
   // eventing
   addListener: (...args) => cameraEvents.addListener(...args),
   addOnceListener: (...args) => cameraEvents.once(...args),
