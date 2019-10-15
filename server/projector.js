@@ -92,7 +92,7 @@ function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
         projectorEvents.emit('busy');
       }
     })
-    .then(() => camera.getLatestFrame());
+    .then(() => camera.captureFrame());
 
   currentOperation = getFrameChain
     .then(() => {
@@ -117,7 +117,10 @@ function captureAndAdvance(frameNumber = 0) {
     needToStopCaptureAndAdvance = false;
   }
 
+  // To pad or not to pad.... might be helpful for certain tools and even just
+  // viewing the images in order, but we'd need to know the total frame count
   captureFrame(`${frameNumber}`, true)
+  // captureFrame(`${frameNumber}`.padStart(8, '0'), true)
     .then(() => advanceFrame())
     .then(() => {
       if (needToStopCaptureAndAdvance) {
