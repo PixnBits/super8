@@ -48,7 +48,7 @@ function Controls() {
           Contrast:
           <input
             id="contrast-setting"
-            type="number"
+            type="range"
             min="-100"
             max="100"
             step="1"
@@ -60,7 +60,7 @@ function Controls() {
           Saturation
           <input
             id="saturation-setting"
-            type="number"
+            type="range"
             min="-100"
             max="100"
             step="1"
@@ -72,7 +72,7 @@ function Controls() {
           Brightness
           <input
             id="brightness-setting"
-            type="number"
+            type="range"
             min="0"
             max="100"
             step="1"
