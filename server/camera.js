@@ -27,19 +27,6 @@ function updateFrame() {
   });
 }
 
-function captureFrame() {
-  cancelFrameTimeout();
-  const updateFrameChain = updateFrame();
-
-  updateFrameChain
-    .catch((err) => {
-      console.error(err);
-      restartFrameTimeout();
-    });
-
-  return updateFrameChain;
-}
-
 function cancelFrameTimeout() {
   if (updateFrameHandle) {
     clearTimeout(updateFrameHandle);
@@ -47,10 +34,6 @@ function cancelFrameTimeout() {
     return true;
   }
   return false;
-}
-
-function restartFrameTimeout() {
-  updateFramePeriodically(lastPeriodicInterval);
 }
 
 function updateFramePeriodically(interval = 5) {
@@ -71,6 +54,23 @@ function updateFramePeriodically(interval = 5) {
   }
 
   timeoutUpdate();
+}
+
+function restartFrameTimeout() {
+  updateFramePeriodically(lastPeriodicInterval);
+}
+
+function captureFrame() {
+  cancelFrameTimeout();
+  const updateFrameChain = updateFrame();
+
+  updateFrameChain
+    .catch((err) => {
+      console.error(err);
+      restartFrameTimeout();
+    });
+
+  return updateFrameChain;
 }
 
 module.exports = {
