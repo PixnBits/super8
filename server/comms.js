@@ -48,15 +48,21 @@ function setupComms(webSocketServer) {
     busyOperationName = operationName;
   });
 
+  camera.addListener('frame', () => {
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      clientWebSocket.send(JSON.stringify({ notification: 'frame' }));
+    });
+  });
+
   webSocketServer.on('connection', (webSocket) => {
     console.log('new WebSocket connection');
     // TODO: ping-pong to avoid keeping closed connections
     // https://www.npmjs.com/package/ws#how-to-detect-and-close-broken-connections
 
+    // client requests
     webSocket.on('message', handleClientMessage);
-    const sendFrameNotification = () => webSocket.send(JSON.stringify({ notification: 'frame' }));
-    webSocket.on('close', () => camera.removeListener('frame', sendFrameNotification));
-    camera.addListener('frame', sendFrameNotification);
+
+    // send current state
     // TODO: DRY up idle/busy notifications
     webSocket.send(JSON.stringify(
       busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
