@@ -12,20 +12,22 @@ function handleClientMessage(rawMessage) {
   }
   switch (message.procedure) {
     case 'stop':
-      projector.stop();
-      return;
     case 'advanceFrame':
-      projector.advanceFrame();
-      return;
     case 'captureFrame':
-      projector.captureFrame();
-      return;
     case 'advance':
-      projector.advance();
-      return;
     case 'captureAndAdvance':
-      projector.captureAndAdvance();
+      projector[message.procedure]();
       return;
+
+    case 'setContrast':
+    case 'setSaturation':
+      if (!Array.isArray(message.args)) {
+        console.warn(`${message.procedure} requires arguments`);
+      } else {
+        camera[message.procedure](...message.args);
+      }
+      return;
+
     default:
       console.warn(`unknown procedure "${message.procedure}"`, message);
   }
@@ -33,24 +35,32 @@ function handleClientMessage(rawMessage) {
 
 function setupComms(webSocketServer) {
   let busyOperationName = false; // false for idle
+  let cameraSettings = null;
 
   projector.addListener('idle', () => {
+    busyOperationName = false;
     webSocketServer.clients.forEach((clientWebSocket) => {
       clientWebSocket.send(JSON.stringify({ notification: 'idle' }));
     });
-    busyOperationName = false;
   });
 
   projector.addListener('busy', (operationName) => {
+    busyOperationName = operationName;
     webSocketServer.clients.forEach((clientWebSocket) => {
       clientWebSocket.send(JSON.stringify({ notification: 'busy', operationName }));
     });
-    busyOperationName = operationName;
   });
 
   camera.addListener('frame', () => {
     webSocketServer.clients.forEach((clientWebSocket) => {
       clientWebSocket.send(JSON.stringify({ notification: 'frame' }));
+    });
+  });
+
+  camera.addListener('settings', (settings) => {
+    cameraSettings = settings;
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      clientWebSocket.send(JSON.stringify({ notification: 'cameraSettings', settings }));
     });
   });
 
@@ -67,6 +77,7 @@ function setupComms(webSocketServer) {
     webSocket.send(JSON.stringify(
       busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
     ));
+    webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
   });
 }
 

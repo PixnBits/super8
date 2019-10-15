@@ -22,7 +22,8 @@ ws.addEventListener('message', function incoming(event) {
   }
 });
 
-// args should be an object for key/value pairs
+// args can be an object for key/value pairs
+// args can be an array for positional values
 function sendCommand(procedure, args) {
   // TODO: ensure procedure is a truthy string? (args is optional)
   ws.send(JSON.stringify({ procedure, args }));
@@ -48,12 +49,22 @@ function advance() {
   sendCommand('advance');
 }
 
+function setContrast(contrast) {
+  sendCommand('setContrast', [contrast]);
+}
+
+function setSaturation(saturation) {
+  sendCommand('setSaturation', [saturation]);
+}
+
 module.exports = {
   captureAndAdvance,
   stop,
   advanceFrame,
   captureFrame,
   advance,
+  setContrast,
+  setSaturation,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
   removeEventListener: (...args) => notifications.removeEventListener(...args),

@@ -3,13 +3,25 @@ const { EventEmitter } = require('events');
 
 const encoding = 'jpg';
 
-const raspistill = new Raspistill({
+const defaultCameraOptions = {
   noFileSave: true,
+  noPreview: true,
+  time: 500,
   encoding,
   // defaults to max, 3280 x 2464
   width: 800,
   height: 600,
-});
+};
+// https://www.npmjs.com/package/node-raspistill#constructoroptions-icameraoptions
+const userCameraOptions = {
+  // (-100 ... 100). If undefined - raspistill util use contrast 0 value
+  contrast: 0,
+  // 50 is the default
+  // brightness: 50,
+  // (-100 ... 100). Raspistill util uses 0 value if undefined
+  saturation: 0,
+};
+const raspistill = new Raspistill(defaultCameraOptions);
 
 const cameraEvents = new EventEmitter();
 
@@ -25,6 +37,38 @@ function updateFrame() {
     cameraEvents.emit('frame', photo);
     return { photo, encoding };
   });
+}
+
+function setOptions() {
+  const settings = { ...userCameraOptions, ...defaultCameraOptions };
+  raspistill.setOptions(settings);
+  cameraEvents.emit('settings', settings);
+}
+
+function isNumber(n) {
+  return typeof n === 'number' && !Number.isNaN(n);
+}
+
+function setContrast(targetContrast) {
+  if (!isNumber) {
+    throw new Error('contrast must be a number');
+  }
+  if (targetContrast > 100 || targetContrast < -100) {
+    throw new Error('contrast must be between -100 and 100');
+  }
+  userCameraOptions.contrast = targetContrast;
+  setOptions();
+}
+
+function setSaturation(targetSaturation) {
+  if (!isNumber) {
+    throw new Error('saturation must be a number');
+  }
+  if (targetSaturation > 100 || targetSaturation < -100) {
+    throw new Error('saturation must be between -100 and 100');
+  }
+  userCameraOptions.saturation = targetSaturation;
+  setOptions();
 }
 
 function cancelFrameTimeout() {
@@ -75,6 +119,8 @@ module.exports = {
   getLatestFrame,
   updateFramePeriodically,
   captureFrame,
+  setContrast,
+  setSaturation,
   // eventing
   addListener: (...args) => cameraEvents.addListener(...args),
   addOnceListener: (...args) => cameraEvents.once(...args),
