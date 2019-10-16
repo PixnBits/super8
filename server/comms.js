@@ -73,12 +73,12 @@ function setupComms(webSocketServer) {
 
   projector.addListener('lampOn', () => sendNotificationToEachClient('lampOn'));
   projector.addListener('lampOff', () => sendNotificationToEachClient('lampOff'));
-  let lampBrightness = 25;
+  let lampBrightness;
   projector.addListener('lampBrightness', (brightness) => {
     lampBrightness = brightness;
     sendNotificationToEachClient('lampBrightness', { brightness });
   });
-  let advanceSpeed = 3200;
+  let advanceSpeed;
   projector.addListener('advanceSpeed', (speed) => {
     advanceSpeed = speed;
     sendNotificationToEachClient('advanceSpeed', { speed });
@@ -86,7 +86,7 @@ function setupComms(webSocketServer) {
 
   camera.addListener('frame', () => sendNotificationToEachClient('frame'));
 
-  let cameraSettings = null;
+  let cameraSettings;
   camera.addListener('settings', (settings) => {
     cameraSettings = settings;
     sendNotificationToEachClient('cameraSettings', { settings });
@@ -104,9 +104,15 @@ function setupComms(webSocketServer) {
     webSocket.send(JSON.stringify(
       busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
     ));
-    webSocket.send(JSON.stringify({ notification: 'lampBrightness', brightness: lampBrightness }));
-    webSocket.send(JSON.stringify({ notification: 'advanceSpeed', speed: advanceSpeed }));
-    webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
+    if (lampBrightness !== undefined) {
+      webSocket.send(JSON.stringify({ notification: 'lampBrightness', brightness: lampBrightness }));
+    }
+    if (advanceSpeed !== undefined) {
+      webSocket.send(JSON.stringify({ notification: 'advanceSpeed', speed: advanceSpeed }));
+    }
+    if (cameraSettings !== undefined) {
+      webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
+    }
   });
 }
 
