@@ -61,7 +61,7 @@ function Controls() {
           max="255"
           step="1"
           value={lampBrightness}
-          onChange={(event) => comms.setLampBrightness(event.target.value)}
+          onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
         />
       </label>
       </p>
@@ -75,7 +75,7 @@ function Controls() {
             max="100"
             step="1"
             value={contrast}
-            onChange={(event) => comms.setContrast(event.target.value)}
+            onChange={(event) => comms.setContrast(parseInt(event.target.value, 10))}
           />
         </label>
         <label htmlFor="saturation-setting">
@@ -87,7 +87,7 @@ function Controls() {
             max="100"
             step="1"
             value={saturation}
-            onChange={(event) => comms.setSaturation(event.target.value)}
+            onChange={(event) => comms.setSaturation(parseInt(event.target.value, 10))}
           />
         </label>
         <label htmlFor="camera-brightness-setting">
@@ -99,7 +99,7 @@ function Controls() {
             max="100"
             step="1"
             value={cameraBrightness}
-            onChange={(event) => comms.setCameraBrightness(event.target.value)}
+            onChange={(event) => comms.setCameraBrightness(parseInt(event.target.value, 10))}
           />
         </label>
       </p>
