@@ -49,6 +49,14 @@ function advance() {
   sendCommand('advance');
 }
 
+function setLampBrightness(brightness) {
+  sendCommand('setLampBrightness', [brightness]);
+}
+
+function setAdvanceSpeed(speed) {
+  sendCommand('setAdvanceSpeed', [speed]);
+}
+
 function setContrast(contrast) {
   sendCommand('setContrast', [contrast]);
 }
@@ -61,20 +69,19 @@ function setCameraBrightness(brightness) {
   sendCommand('setCameraBrightness', [brightness]);
 }
 
-function setLampBrightness(brightness) {
-  sendCommand('setLampBrightness', [brightness]);
-}
-
 module.exports = {
+  // projector
   captureAndAdvance,
   stop,
   advanceFrame,
   captureFrame,
   advance,
+  setLampBrightness,
+  setAdvanceSpeed,
+  // camera
   setContrast,
   setSaturation,
   setCameraBrightness,
-  setLampBrightness,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
   removeEventListener: (...args) => notifications.removeEventListener(...args),

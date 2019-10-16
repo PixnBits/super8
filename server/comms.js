@@ -23,6 +23,7 @@ function handleClientMessage(rawMessage) {
       projector[message.procedure]();
       return;
 
+    case 'setAdvanceSpeed':
     case 'setLampBrightness':
       if (!Array.isArray(message.args)) {
         console.warn(`${message.procedure} requires arguments`);
@@ -54,20 +55,17 @@ function handleClientMessage(rawMessage) {
 }
 
 function setupComms(webSocketServer) {
-  let busyOperationName = false; // false for idle
-  let cameraSettings = null;
-
   function sendNotificationToEachClient(notificationName, otherData = {}) {
     webSocketServer.clients.forEach((clientWebSocket) => {
       clientWebSocket.send(JSON.stringify({ ...otherData, notification: notificationName }));
     });
   }
 
+  let busyOperationName = false; // false for idle
   projector.addListener('idle', () => {
     busyOperationName = false;
     sendNotificationToEachClient('idle');
   });
-
   projector.addListener('busy', (operationName) => {
     busyOperationName = operationName;
     sendNotificationToEachClient('busy');
@@ -75,10 +73,20 @@ function setupComms(webSocketServer) {
 
   projector.addListener('lampOn', () => sendNotificationToEachClient('lampOn'));
   projector.addListener('lampOff', () => sendNotificationToEachClient('lampOff'));
-  projector.addListener('lampBrightness', (brightness) => sendNotificationToEachClient('lampBrightness', { brightness }));
+  let lampBrightness = 25;
+  projector.addListener('lampBrightness', (brightness) => {
+    lampBrightness = brightness;
+    sendNotificationToEachClient('lampBrightness', { brightness });
+  });
+  let advanceSpeed = 3200;
+  projector.addListener('advanceSpeed', (speed) => {
+    advanceSpeed = speed;
+    sendNotificationToEachClient('advanceSpeed', { speed });
+  });
 
   camera.addListener('frame', () => sendNotificationToEachClient('frame'));
 
+  let cameraSettings = null;
   camera.addListener('settings', (settings) => {
     cameraSettings = settings;
     sendNotificationToEachClient('cameraSettings', { settings });
@@ -92,11 +100,12 @@ function setupComms(webSocketServer) {
     // client requests
     webSocket.on('message', handleClientMessage);
 
-    // send current state
-    // TODO: DRY up idle/busy notifications
+    // TODO: DRY up send current state on initial connections
     webSocket.send(JSON.stringify(
       busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
     ));
+    webSocket.send(JSON.stringify({ notification: 'lampBrightness', brightness: lampBrightness }));
+    webSocket.send(JSON.stringify({ notification: 'advanceSpeed', speed: advanceSpeed }));
     webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
   });
 }

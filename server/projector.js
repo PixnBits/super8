@@ -80,6 +80,22 @@ function advance() {
   return currentOperation;
 }
 
+
+function setAdvanceSpeed(speed) {
+  if (!isNumber(speed)) {
+    return Promise.reject(new Error('speed must be a number'));
+  }
+  if (speed < 0) {
+    return Promise.reject(new Error('speed cannot be negative'));
+  }
+
+  currentOperation = currentOperation
+    .then(() => writeLineToPort(`A S ${speed}`))
+    .then(() => projectorEvents.emit('advanceSpeed', speed));
+
+  return currentOperation;
+}
+
 // skipBusyIdleNotifications means the calling function whill handle those manually
 function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
   // we need the projector to hold still while we capture the frame
@@ -165,7 +181,6 @@ function setLampBrightness(brightness) {
     .then(() => writeLineToPort(`L S ${brightness}`))
     .then(() => waitForPortLines('LAMP_ON', 'LAMP_OFF'))
     .then((line) => {
-      console.log('lamp line', { line });
       projectorEvents.emit('lampBrightness', brightness);
       projectorEvents.emit(line === 'LAMP_OFF' ? 'lampOff' : 'lampOn');
     });
@@ -177,6 +192,7 @@ module.exports = {
   stop,
   advanceFrame,
   advance,
+  setAdvanceSpeed,
   captureFrame,
   captureAndAdvance,
   lampOn,

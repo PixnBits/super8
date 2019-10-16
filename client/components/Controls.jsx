@@ -3,14 +3,29 @@ import React, { useState, useEffect } from 'react';
 import comms from '../comms';
 
 function Controls() {
+  // projector
   const [isProjectorBusy, setBusyState] = useState(false);
   const [contrast, setContrastState] = useState(0);
+  const [lampBrightness, setLampBrightnessState] = useState(25);
+  const [advanceSpeed, setAdvanceSpeedState] = useState(3200);
+  // camera
   const [saturation, setSaturationState] = useState(0);
   const [cameraBrightness, setCameraBrightnessState] = useState(50);
-  const [lampBrightness, setLampBrightnessState] = useState(25);
   useEffect(() => {
+    // projector
     const busyListener = () => setBusyState(true);
     const idleListener = () => setBusyState(false);
+    const cameraLampBrightnessListener = (event) => {
+      const { notification } = event;
+      const { brightness } = notification;
+      setLampBrightnessState(brightness);
+    };
+    const advanceSpeedListener = (event) => {
+      const { notification } = event;
+      const { speed } = notification;
+      setAdvanceSpeedState(speed);
+    };
+    // camera
     const cameraSettingsListener = (event) => {
       const { notification } = event;
       const { settings } = notification;
@@ -24,20 +39,21 @@ function Controls() {
         setCameraBrightnessState(settings.brightness);
       }
     };
-    const cameraLampBrightnessListener = (event) => {
-      const { notification } = event;
-      const { brightness } = notification;
-      setLampBrightnessState(brightness);
-    };
+    // projector
     comms.addEventListener('busy', busyListener);
     comms.addEventListener('idle', idleListener);
-    comms.addEventListener('cameraSettings', cameraSettingsListener);
     comms.addEventListener('lampBrightness', cameraLampBrightnessListener);
+    comms.addEventListener('advanceSpeed', advanceSpeedListener);
+    // camera
+    comms.addEventListener('cameraSettings', cameraSettingsListener);
     return () => {
+      // projector
       comms.removeEventListener('busy', busyListener);
       comms.removeEventListener('idle', idleListener);
-      comms.removeEventListener('cameraSettings', cameraSettingsListener);
       comms.removeEventListener('lampBrightness', cameraLampBrightnessListener);
+      comms.removeEventListener('advanceSpeed', advanceSpeedListener);
+      // camera
+      comms.removeEventListener('cameraSettings', cameraSettingsListener);
     };
   });
 
@@ -63,6 +79,19 @@ function Controls() {
             step="1"
             value={lampBrightness}
             onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
+            className="ml-1"
+          />
+        </label>
+        <label htmlFor="advance-speed-setting">
+        Advance Speed
+          <input
+            id="advance-speed-setting"
+            type="range"
+            min="0"
+            max="12000"
+            step="200"
+            value={advanceSpeed}
+            onChange={(event) => comms.setAdvanceSpeed(parseInt(event.target.value, 10))}
             className="ml-1"
           />
         </label>
