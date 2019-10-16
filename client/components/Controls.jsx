@@ -52,18 +52,18 @@ function Controls() {
         <button type="button" className="btn btn-secondary" disabled={isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
       </p>
       <p>
-      <label htmlFor="lamp-brightness-setting">
+        <label htmlFor="lamp-brightness-setting">
         Brightness
-        <input
-          id="lamp-brightness-setting"
-          type="range"
-          min="0"
-          max="255"
-          step="1"
-          value={lampBrightness}
-          onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
-        />
-      </label>
+          <input
+            id="lamp-brightness-setting"
+            type="range"
+            min="0"
+            max="255"
+            step="1"
+            value={lampBrightness}
+            onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
+          />
+        </label>
       </p>
       <p>
         <label htmlFor="contrast-setting">
