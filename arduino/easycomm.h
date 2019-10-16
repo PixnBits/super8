@@ -23,6 +23,8 @@ enum easycommNotification {
   ADVANCE_STARTED,
   REVERSE_STARTED,
   MOTION_STOPPED,
+  LAMP_ON,
+  LAMP_OFF,
 };
 
 /**************************************************************************/
@@ -116,6 +118,42 @@ public:
                       Serial.println("# ERR: invalid number");
                       bufferActiveSize = 0;
                     }
+                  } else if (
+                    buffer[0] == 'L' &&
+                    buffer[1] == ' ' &&
+                    buffer[2] == 'A' &&
+                    buffer[3] == 0
+                  ) {
+                    bufferActiveSize = 0;
+                    return { code: LAMP_ACTIVATE };
+                  } else if (
+                    buffer[0] == 'L' &&
+                    buffer[1] == ' ' &&
+                    buffer[2] == 'D' &&
+                    buffer[3] == 0
+                  ) {
+                    bufferActiveSize = 0;
+                    return { code: LAMP_DEACTIVATE };
+                  } else if (
+                      buffer[0] == 'L' &&
+                      buffer[1] == ' ' &&
+                      buffer[2] == 'S' &&
+                      buffer[3] == ' '
+                  ) {
+                    // set lamp brightness
+                    char remainingBuffer = buffer + 4;
+                    if (isNumber(remainingBuffer)) {
+                      int brightness = strtol(remainingBuffer, NULL, 10);
+                      bufferActiveSize = 0;
+                      return {
+                        code: SET_LAMP_BRIGHTNESS,
+                        speed: NULL,
+                        brightness: brightness,
+                      };
+                    } else {
+                      Serial.println("# ERR: invalid number");
+                      bufferActiveSize = 0;
+                    }
                   } else {
                     Serial.println("# ERR: unknown command");
                     Serial.print("# ");
@@ -154,6 +192,12 @@ public:
           break;
         case MOTION_STOPPED:
           msg = "MOTION_STOPPED";
+          break;
+        case LAMP_ON:
+          msg = "LAMP_ON";
+          break;
+        case LAMP_OFF:
+          msg = "LAMP_OFF";
           break;
         default:
           return;

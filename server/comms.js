@@ -1,6 +1,8 @@
 const projector = require('./projector');
 const camera = require('./camera');
 
+// lots of procedure names
+/* eslint-disable-next-line complexity */
 function handleClientMessage(rawMessage) {
   console.log('WebSocket message:', rawMessage);
   let message;
@@ -16,12 +18,29 @@ function handleClientMessage(rawMessage) {
     case 'captureFrame':
     case 'advance':
     case 'captureAndAdvance':
+    case 'lampOn':
+    case 'lampOff':
       projector[message.procedure]();
+      return;
+
+    case 'setLampBrightness':
+      if (!Array.isArray(message.args)) {
+        console.warn(`${message.procedure} requires arguments`);
+      } else {
+        projector[message.procedure](...message.args);
+      }
+      return;
+
+    case 'setCameraBrightness':
+      if (!Array.isArray(message.args)) {
+        console.warn(`${message.procedure} requires arguments`);
+      } else {
+        camera.setBrightness(...message.args);
+      }
       return;
 
     case 'setContrast':
     case 'setSaturation':
-    case 'setBrightness':
       if (!Array.isArray(message.args)) {
         console.warn(`${message.procedure} requires arguments`);
       } else {
@@ -38,31 +57,31 @@ function setupComms(webSocketServer) {
   let busyOperationName = false; // false for idle
   let cameraSettings = null;
 
+  function sendNotificationToEachClient(notificationName, otherData = {}) {
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      clientWebSocket.send(JSON.stringify({ ...otherData, notification: notificationName }));
+    });
+  }
+
   projector.addListener('idle', () => {
     busyOperationName = false;
-    webSocketServer.clients.forEach((clientWebSocket) => {
-      clientWebSocket.send(JSON.stringify({ notification: 'idle' }));
-    });
+    sendNotificationToEachClient('idle');
   });
 
   projector.addListener('busy', (operationName) => {
     busyOperationName = operationName;
-    webSocketServer.clients.forEach((clientWebSocket) => {
-      clientWebSocket.send(JSON.stringify({ notification: 'busy', operationName }));
-    });
+    sendNotificationToEachClient('busy');
   });
 
-  camera.addListener('frame', () => {
-    webSocketServer.clients.forEach((clientWebSocket) => {
-      clientWebSocket.send(JSON.stringify({ notification: 'frame' }));
-    });
-  });
+  projector.addListener('lampOn', () => sendNotificationToEachClient('lampOn'));
+  projector.addListener('lampOff', () => sendNotificationToEachClient('lampOff'));
+  projector.addListener('lampBrightness', (brightness) => sendNotificationToEachClient('lampBrightness', { brightness }));
+
+  camera.addListener('frame', () => sendNotificationToEachClient('frame'));
 
   camera.addListener('settings', (settings) => {
     cameraSettings = settings;
-    webSocketServer.clients.forEach((clientWebSocket) => {
-      clientWebSocket.send(JSON.stringify({ notification: 'cameraSettings', settings }));
-    });
+    sendNotificationToEachClient('cameraSettings', { settings });
   });
 
   webSocketServer.on('connection', (webSocket) => {

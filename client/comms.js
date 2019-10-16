@@ -56,8 +56,13 @@ function setContrast(contrast) {
 function setSaturation(saturation) {
   sendCommand('setSaturation', [saturation]);
 }
-function setBrightness(brightness) {
-  sendCommand('setBrightness', [brightness]);
+
+function setCameraBrightness(brightness) {
+  sendCommand('setCameraBrightness', [brightness]);
+}
+
+function setLampBrightness(brightness) {
+  sendCommand('setLampBrightness', [brightness]);
 }
 
 module.exports = {
@@ -68,7 +73,8 @@ module.exports = {
   advance,
   setContrast,
   setSaturation,
-  setBrightness,
+  setCameraBrightness,
+  setLampBrightness,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
   removeEventListener: (...args) => notifications.removeEventListener(...args),

@@ -10,6 +10,8 @@ For some reason the wiring wasn't working for the Pi directly connected to the `
 
 The `pins.h` file is set up for a motor and limit switch to be connected to the X axis. The limit switch pins on the shield are wired to the same Arduino pin so +X or -X doesn't make a difference.
 
+An LED can be connected to the Z limit pins via a MOSFET. This pin was chosen for PWM to enable adjusting the brightness. I had a [N Channel STP120NF10](https://www.digikey.com/products/en?keywords=P120nf10) on hand, so I connected Gate (Pin 1) to Z Limit, Source (Pin 3) to GND, and Drain (Pin 2) to the LED's cathode (negative). The LED's anode (positive) is connected to +12V (the same driving my stepper motor). Adafruit has a good [usage example](https://learn.adafruit.com/rgb-led-strips/usage).
+
 ## Protocol
 
 Text, each command is `\n` terminated
@@ -37,3 +39,13 @@ Text, each command is `\n` terminated
 * `A S 3200\n`: Sets the (micro)steps per second velocity of the motor for Advancements
   * `# ERR: invalid number\n` is received if the value transmitted is determined to not be a number
   * no messages are received if the value is used, though the Information command can confirm the new value
+
+### Lamp
+* `L A\n`: Lamp Activate, turn the lamp/LED
+  * `LAMP_ON\n` is received after the PWM signal is applied
+* `L D\n`: Lamp LAMP_DEACTIVATE, turn the lamp/LED
+  * `LAMP_OFF\n` is received after the PWM signal is removed (that is, no pulse is applied)
+* `L S\n`: Set the lamp brightness, also turning on the lamp if not 0
+  * `# ERR: invalid number\n` is received if the value transmitted is determined to not be a number
+  * no messages are received if the value is out of bounds
+  * `LAMP_ON\n` or `LAMP_OFF\n` are received if the value is used (0 is seen as off)

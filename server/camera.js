@@ -1,6 +1,8 @@
 const { Raspistill } = require('node-raspistill');
 const { EventEmitter } = require('events');
 
+const isNumber = require('./utils/isNumber');
+
 const encoding = 'jpg';
 
 const defaultCameraOptions = {
@@ -43,10 +45,6 @@ function setOptions() {
   const settings = { ...userCameraOptions, ...defaultCameraOptions };
   raspistill.setOptions(settings);
   cameraEvents.emit('settings', settings);
-}
-
-function isNumber(n) {
-  return typeof n === 'number' && !Number.isNaN(n);
 }
 
 function setContrast(targetContrast) {

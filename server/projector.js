@@ -6,6 +6,8 @@ const path = require('path');
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 
+const isNumber = require('./utils/isNumber');
+
 const fsp = {
   writeFile: promisify(fs.writeFile),
 };
@@ -42,7 +44,7 @@ function waitForPortLines(...lines) {
         return;
       }
       portLines.removeListener('data', dataCallback);
-      res();
+      res(lineString);
     };
 
     portLines.on('data', dataCallback);
@@ -130,12 +132,56 @@ function captureAndAdvance(frameNumber = 0) {
     });
 }
 
+function lampOn() {
+  currentOperation = currentOperation
+    .then(() => writeLineToPort('L A'))
+    .then(() => waitForPortLines('LAMP_ON'))
+    .then(() => projectorEvents.emit('lampOn'));
+
+  return currentOperation;
+}
+
+function lampOff() {
+  currentOperation = currentOperation
+    .then(() => writeLineToPort('L D'))
+    .then(() => waitForPortLines('LAMP_OFF'))
+    .then(() => projectorEvents.emit('lampOff'));
+
+  return currentOperation;
+}
+
+function setLampBrightness(brightness) {
+  if (!isNumber(brightness)) {
+    return Promise.reject(new Error('brightness must be a number'));
+  }
+  if (brightness % 1) {
+    return Promise.reject(new Error('brightness must be an integer'));
+  }
+  if (brightness > 255 || brightness < 0) {
+    return Promise.reject(new Error('brightness must be between 0 and 255'));
+  }
+
+  currentOperation = currentOperation
+    .then(() => writeLineToPort(`L S ${brightness}`))
+    .then(() => waitForPortLines('LAMP_ON', 'LAMP_OFF'))
+    .then((line) => {
+      console.log('lamp line', { line });
+      projectorEvents.emit('lampBrightness', brightness);
+      projectorEvents.emit(line === 'LAMP_OFF' ? 'lampOff' : 'lampOn');
+    });
+
+  return currentOperation;
+}
+
 module.exports = {
   stop,
   advanceFrame,
   advance,
   captureFrame,
   captureAndAdvance,
+  lampOn,
+  lampOff,
+  setLampBrightness,
   // eventing
   addListener: (...args) => projectorEvents.addListener(...args),
   addOnceListener: (...args) => projectorEvents.once(...args),

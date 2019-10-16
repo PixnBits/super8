@@ -20,10 +20,12 @@
 #include "easycomm.h"
 #include "pins.h"
 #include "endstop.h"
+#include "pwmLamp.h"
 
 easycomm comm;
 AccelStepper stepper_film(AccelStepper::DRIVER, PIN_FILM_STEP, PIN_FILM_DIR);
 endstop switch_frame(PIN_FILM_SWITCH, SWITCH_DEFAULT_STATE);
+pwmLamp lamp(PIN_LAMP);
 bool actionFrameLimitHit = false;
 bool frameLimitNeedsToUnhit;
 unsigned long millisMotorsStoppedAt;
@@ -145,6 +147,24 @@ void loop() {
         targetSpeed = command.speed;
         if (stepper_film.speed() != 0.0) {
           stepper_film.setSpeed(MOTOR_FOWARD_DIR * targetSpeed);
+        }
+        break;
+      case LAMP_DEACTIVATE:
+        lamp.off();
+        comm.notify(LAMP_OFF);
+        break;
+      case LAMP_ACTIVATE:
+        lamp.on();
+        comm.notify(LAMP_ON);
+        break;
+      case SET_LAMP_BRIGHTNESS:
+        if (!lamp.setBrightness(command.brightness)) {
+          break;
+        }
+        if (command.brightness == 0) {
+          comm.notify(LAMP_OFF);
+        } else {
+          comm.notify(LAMP_ON);
         }
         break;
       case PRINT_INFO:
