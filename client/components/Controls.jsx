@@ -44,11 +44,12 @@ function Controls() {
   // TODO: debounce calls to comm.setContrast & setSaturation
   return (
     <React.Fragment>
+      <h3>Projector</h3>
       <p>
-        <button type="button" className="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
-        <button type="button" className="btn btn-danger" onClick={() => comms.stop()}>Stop</button>
-        <button type="button" className="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
-        <button type="button" className="btn btn-primary" disabled={isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
+        <button type="button" className="btn btn-danger mr-2" onClick={() => comms.stop()}>Stop</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
         <button type="button" className="btn btn-secondary" disabled={isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
       </p>
       <p>
@@ -62,12 +63,15 @@ function Controls() {
             step="1"
             value={lampBrightness}
             onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
+            className="ml-1"
           />
         </label>
       </p>
+
+      <h3>Camera</h3>
       <p>
-        <label htmlFor="contrast-setting">
-          Contrast:
+        <label htmlFor="contrast-setting" className="mr-2">
+          Contrast
           <input
             id="contrast-setting"
             type="range"
@@ -76,9 +80,10 @@ function Controls() {
             step="1"
             value={contrast}
             onChange={(event) => comms.setContrast(parseInt(event.target.value, 10))}
+            className="ml-1"
           />
         </label>
-        <label htmlFor="saturation-setting">
+        <label htmlFor="saturation-setting" className="mr-2">
           Saturation
           <input
             id="saturation-setting"
@@ -88,6 +93,7 @@ function Controls() {
             step="1"
             value={saturation}
             onChange={(event) => comms.setSaturation(parseInt(event.target.value, 10))}
+            className="ml-1"
           />
         </label>
         <label htmlFor="camera-brightness-setting">
@@ -100,6 +106,7 @@ function Controls() {
             step="1"
             value={cameraBrightness}
             onChange={(event) => comms.setCameraBrightness(parseInt(event.target.value, 10))}
+            className="ml-1"
           />
         </label>
       </p>
