@@ -1,72 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 import comms from '../comms';
+import useCommsConnectedState from './hooks/useCommsConnected';
+import useCommsTwoEventBooleanToggle from './hooks/useCommsTwoEventBooleanToggle';
+import useCommsNotificationValue from './hooks/useCommsNotificationValue';
 
 function Controls() {
+  const [commsConnected] = useCommsConnectedState();
   // projector
-  const [isProjectorBusy, setBusyState] = useState(false);
-  const [contrast, setContrastState] = useState(0);
-  const [lampBrightness, setLampBrightnessState] = useState(25);
-  const [advanceSpeed, setAdvanceSpeedState] = useState(3200);
+  const [isProjectorBusy] = useCommsTwoEventBooleanToggle('busy', 'idle', false);
+  const [lampBrightness] = useCommsNotificationValue('lampBrightness', 'brightness', 25);
+  const [advanceSpeed] = useCommsNotificationValue('advanceSpeed', 'speed', 3200);
   // camera
-  const [saturation, setSaturationState] = useState(0);
-  const [cameraBrightness, setCameraBrightnessState] = useState(50);
-  useEffect(() => {
-    // projector
-    const busyListener = () => setBusyState(true);
-    const idleListener = () => setBusyState(false);
-    const cameraLampBrightnessListener = (event) => {
-      const { notification } = event;
-      const { brightness } = notification;
-      setLampBrightnessState(brightness);
-    };
-    const advanceSpeedListener = (event) => {
-      const { notification } = event;
-      const { speed } = notification;
-      setAdvanceSpeedState(speed);
-    };
-    // camera
-    const cameraSettingsListener = (event) => {
-      const { notification } = event;
-      const { settings } = notification;
-      if ('contrast' in settings) {
-        setContrastState(settings.contrast);
-      }
-      if ('saturation' in settings) {
-        setSaturationState(settings.saturation);
-      }
-      if ('brightness' in settings) {
-        setCameraBrightnessState(settings.brightness);
-      }
-    };
-    // projector
-    comms.addEventListener('busy', busyListener);
-    comms.addEventListener('idle', idleListener);
-    comms.addEventListener('lampBrightness', cameraLampBrightnessListener);
-    comms.addEventListener('advanceSpeed', advanceSpeedListener);
-    // camera
-    comms.addEventListener('cameraSettings', cameraSettingsListener);
-    return () => {
-      // projector
-      comms.removeEventListener('busy', busyListener);
-      comms.removeEventListener('idle', idleListener);
-      comms.removeEventListener('lampBrightness', cameraLampBrightnessListener);
-      comms.removeEventListener('advanceSpeed', advanceSpeedListener);
-      // camera
-      comms.removeEventListener('cameraSettings', cameraSettingsListener);
-    };
-  });
+  const [cameraSettings] = useCommsNotificationValue('cameraSettings', 'settings', { contrast: 0, saturation: 0, brightness: 50 });
+
+  const disableAllControls = !commsConnected;
 
   // TODO: debounce calls to comm.setContrast & setSaturation
   return (
     <React.Fragment>
       <h3>Projector</h3>
       <p>
-        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
-        <button type="button" className="btn btn-danger mr-2" onClick={() => comms.stop()}>Stop</button>
-        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
-        <button type="button" className="btn btn-primary mr-2" disabled={isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
-        <button type="button" className="btn btn-secondary" disabled={isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.captureAndAdvance()}>Capture and Advance</button>
+        <button type="button" className="btn btn-danger mr-2" disabled={disableAllControls} onClick={() => comms.stop()}>Stop</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
+        <button type="button" className="btn btn-primary mr-2" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
+        <button type="button" className="btn btn-secondary" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
       </p>
       <p>
         <label htmlFor="lamp-brightness-setting">
@@ -77,6 +36,7 @@ function Controls() {
             min="0"
             max="255"
             step="1"
+            disabled={disableAllControls}
             value={lampBrightness}
             onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
             className="ml-1"
@@ -90,6 +50,7 @@ function Controls() {
             min="0"
             max="12000"
             step="200"
+            disabled={disableAllControls}
             value={advanceSpeed}
             onChange={(event) => comms.setAdvanceSpeed(parseInt(event.target.value, 10))}
             className="ml-1"
@@ -107,7 +68,8 @@ function Controls() {
             min="-100"
             max="100"
             step="1"
-            value={contrast}
+            disabled={disableAllControls}
+            value={cameraSettings.contrast}
             onChange={(event) => comms.setContrast(parseInt(event.target.value, 10))}
             className="ml-1"
           />
@@ -120,7 +82,8 @@ function Controls() {
             min="-100"
             max="100"
             step="1"
-            value={saturation}
+            disabled={disableAllControls}
+            value={cameraSettings.saturation}
             onChange={(event) => comms.setSaturation(parseInt(event.target.value, 10))}
             className="ml-1"
           />
@@ -133,7 +96,8 @@ function Controls() {
             min="0"
             max="100"
             step="1"
-            value={cameraBrightness}
+            disabled={disableAllControls}
+            value={cameraSettings.cameraBrightness}
             onChange={(event) => comms.setCameraBrightness(parseInt(event.target.value, 10))}
             className="ml-1"
           />

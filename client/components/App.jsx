@@ -1,16 +1,13 @@
 import React from 'react';
 
-import FrameImage from './FrameImage';
+import Header from './Header';
 import Controls from './Controls';
+import FrameImage from './FrameImage';
 
 const App = () => (
   <React.Fragment>
     <header>
-      <div className="navbar navbar-dark bg-dark shadow-sm">
-        <div className="container d-flex justify-content-between">
-          <strong className="navbar-brand">Super 8 Projector Control</strong>
-        </div>
-      </div>
+      <Header />
     </header>
     <main>
       <Controls />
