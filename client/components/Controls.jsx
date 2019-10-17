@@ -9,6 +9,7 @@ function Controls() {
   const [commsConnected] = useCommsConnectedState();
   // projector
   const [isProjectorBusy] = useCommsTwoEventBooleanToggle('busy', 'idle', false);
+  const [isLampOn] = useCommsTwoEventBooleanToggle('lampOn', 'lampOff', false);
   const [lampBrightness] = useCommsNotificationValue('lampBrightness', 'brightness', 25);
   const [advanceSpeed] = useCommsNotificationValue('advanceSpeed', 'speed', 3200);
   // camera
@@ -28,20 +29,23 @@ function Controls() {
         <button type="button" className="btn btn-secondary" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
       </p>
       <p>
-        <label htmlFor="lamp-brightness-setting">
         Brightness
-          <input
-            id="lamp-brightness-setting"
-            type="range"
-            min="0"
-            max="255"
-            step="1"
-            disabled={disableAllControls}
-            value={lampBrightness}
-            onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
-            className="ml-1"
-          />
-        </label>
+        <div className="btn-group ml-1 mr-1" role="group" aria-label="First group">
+          <button type="button" className="btn btn-secondary" disabled={isLampOn} onClick={() => comms.lampOn()}>On</button>
+          <button type="button" className="btn btn-secondary" disabled={!isLampOn} onClick={() => comms.lampOff()}>Off</button>
+        </div>
+        <input
+          id="lamp-brightness-setting"
+          type="range"
+          min="0"
+          max="255"
+          step="1"
+          disabled={disableAllControls}
+          value={lampBrightness}
+          onChange={(event) => comms.setLampBrightness(parseInt(event.target.value, 10))}
+          className="mr-2"
+        />
+
         <label htmlFor="advance-speed-setting">
         Advance Speed
           <input

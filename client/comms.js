@@ -81,6 +81,14 @@ function setLampBrightness(brightness) {
   sendCommand('setLampBrightness', [brightness]);
 }
 
+function lampOn() {
+  sendCommand('lampOn');
+}
+
+function lampOff() {
+  sendCommand('lampOff');
+}
+
 function setAdvanceSpeed(speed) {
   sendCommand('setAdvanceSpeed', [speed]);
 }
@@ -105,6 +113,8 @@ module.exports = {
   captureFrame,
   advance,
   setLampBrightness,
+  lampOn,
+  lampOff,
   setAdvanceSpeed,
   // camera
   setContrast,
