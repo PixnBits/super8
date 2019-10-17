@@ -32,7 +32,7 @@ function setupWebSocket(timeToWaitBetweenAttempts = MINIMUM_RETRY_DELAY) {
 
   let nextTimeToWaitBetweenAttempts = Math.floor(
     Math.min(
-      MINIMUM_RETRY_DELAY,
+      MAXIMUM_RETRY_DELAY,
       Math.max(
         MINIMUM_RETRY_DELAY,
         1.2 * (0.9 + 0.2 * Math.random()) * timeToWaitBetweenAttempts
