@@ -4,19 +4,24 @@ import comms from '../../comms';
 
 export default function useCommsNotificationValue(
   eventName,
-  valueName,
-  defaultState
+  valueNameOrCallback,
+  initialState
 ) {
-  const [notificationValue, setNotificationValue] = useState(defaultState);
+  const [notificationValue, setNotificationValue] = useState(initialState);
+
   useEffect(() => {
+    const notificationCallback = typeof valueNameOrCallback === 'function' ? (
+      valueNameOrCallback
+    ) : (
+      (notification) => notification[valueNameOrCallback]
+    );
+
     const eventListener = (event) => {
       const { notification } = event;
-      setNotificationValue(notification[valueName]);
+      setNotificationValue(notificationCallback(notification));
     };
     comms.addEventListener(eventName, eventListener);
-    return () => {
-      comms.removeEventListener(eventName, eventListener);
-    };
+    return () => comms.removeEventListener(eventName, eventListener);
   });
 
   return [notificationValue];
