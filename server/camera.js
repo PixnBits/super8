@@ -8,7 +8,7 @@ const encoding = 'jpg';
 const defaultCameraOptions = {
   noFileSave: true,
   noPreview: true,
-  time: 500,
+  time: 1, // 0 doesn't work, but we can make this small to avoid unneeded delay
   encoding,
   // defaults to max, 3280 x 2464
   width: 800,
