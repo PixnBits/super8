@@ -56,6 +56,7 @@ function handleClientMessage(rawMessage) {
 
 function setupComms(webSocketServer) {
   function sendNotificationToEachClient(notificationName, otherData = {}) {
+    console.log(`notification: ${notificationName}`, otherData);
     webSocketServer.clients.forEach((clientWebSocket) => {
       clientWebSocket.send(JSON.stringify({ ...otherData, notification: notificationName }));
     });
