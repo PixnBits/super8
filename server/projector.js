@@ -53,6 +53,7 @@ function waitForPortLines(...lines) {
 
 function stop() {
   needToStopCaptureAndAdvance = true;
+  camera.unpausePeriodicCaptures();
 
   currentOperation = currentOperation
     .then(() => writeLineToPort('S'))
@@ -133,6 +134,7 @@ function captureAndAdvance(frameNumber = 0) {
   if (frameNumber === 0) {
     projectorEvents.emit('busy');
     needToStopCaptureAndAdvance = false;
+    camera.pausePeriodicCaptures();
   }
 
   // To pad or not to pad.... might be helpful for certain tools and even just

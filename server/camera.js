@@ -95,12 +95,25 @@ function captureFrame() {
   return cameraCurrentOperation;
 }
 
+let periodicCapturesPaused = false;
+
+function pausePeriodicCaptures() {
+  periodicCapturesPaused = true;
+}
+
+function unpausePeriodicCaptures() {
+  periodicCapturesPaused = false;
+}
+
 let frameLastQueued = 0;
 cameraEvents.on('frameQueued', () => { frameLastQueued = Date.now(); });
 
 function queueCaptureFrameCallback(intervalMS) {
   return () => {
-    if (Date.now() - frameLastQueued < intervalMS) {
+    if (
+      periodicCapturesPaused
+      || Date.now() - frameLastQueued < intervalMS
+    ) {
       return;
     }
     captureFrame();
@@ -131,6 +144,8 @@ function updateFramePeriodically(interval = 5e3) {
 module.exports = {
   getLatestFrame,
   updateFramePeriodically,
+  pausePeriodicCaptures,
+  unpausePeriodicCaptures,
   captureFrame,
   setContrast,
   setSaturation,
