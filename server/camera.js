@@ -27,34 +27,17 @@ const raspistill = new Raspistill(defaultCameraOptions);
 
 const cameraEvents = new EventEmitter();
 
-let latestFrame = null;
-let updateFrameHandle = null;
-let lastPeriodicInterval = 5;
-let getFrameCurrentOperation = Promise.resolve();
-
-const getLatestFrame = () => ({ photo: latestFrame, encoding });
-
-function updateFrame() {
-  getFrameCurrentOperation = getFrameCurrentOperation
-    .then(() => raspistill.takePhoto())
-    .then((photo) => {
-      latestFrame = photo;
-      cameraEvents.emit('frame', photo);
-      return { photo, encoding };
-    });
-
-  return getFrameCurrentOperation;
-}
+let cameraCurrentOperation = Promise.resolve();
 
 function setOptions() {
-  getFrameCurrentOperation = getFrameCurrentOperation
+  cameraCurrentOperation = cameraCurrentOperation
     .then(() => {
       const settings = { ...userCameraOptions, ...defaultCameraOptions };
       console.log('camera: setOptions');
       raspistill.setOptions(settings);
       cameraEvents.emit('settings', settings);
     });
-  return getFrameCurrentOperation;
+  return cameraCurrentOperation;
 }
 
 function setContrast(targetContrast) {
@@ -65,7 +48,7 @@ function setContrast(targetContrast) {
     throw new Error('contrast must be between -100 and 100');
   }
   userCameraOptions.contrast = targetContrast;
-  setOptions();
+  return setOptions();
 }
 
 function setSaturation(targetSaturation) {
@@ -76,7 +59,7 @@ function setSaturation(targetSaturation) {
     throw new Error('saturation must be between -100 and 100');
   }
   userCameraOptions.saturation = targetSaturation;
-  setOptions();
+  return setOptions();
 }
 
 function setBrightness(targetBrightness) {
@@ -87,51 +70,62 @@ function setBrightness(targetBrightness) {
     throw new Error('brightness must be between 0 and 100');
   }
   userCameraOptions.brightness = targetBrightness;
-  setOptions();
+  return setOptions();
 }
 
-function cancelFrameTimeout() {
-  if (updateFrameHandle) {
-    clearTimeout(updateFrameHandle);
-    updateFrameHandle = null;
-    return true;
-  }
-  return false;
-}
+let latestFrame = null;
 
-function updateFramePeriodically(interval = 5) {
-  cancelFrameTimeout();
-  if (interval <= 0) {
-    console.log('frame update canceled');
-    return;
-  }
-
-  lastPeriodicInterval = interval;
-  const intervalMS = interval * 1e3;
-  console.log(`changing frame updates to ${interval}s`);
-
-  function timeoutUpdate() {
-    updateFrame()
-      .then(() => { updateFrameHandle = setTimeout(timeoutUpdate, intervalMS); })
-      .catch(() => { updateFrameHandle = setTimeout(timeoutUpdate, intervalMS); });
-  }
-
-  timeoutUpdate();
-}
-
-function restartFrameTimeout() {
-  updateFramePeriodically(lastPeriodicInterval);
+function getLatestFrame() {
+  return {
+    photo: latestFrame,
+    encoding,
+  };
 }
 
 function captureFrame() {
-  cancelFrameTimeout();
-  const updateFrameChain = updateFrame();
+  cameraEvents.emit('frameQueued');
+  cameraCurrentOperation = cameraCurrentOperation
+    .then(() => raspistill.takePhoto())
+    .then((photo) => {
+      latestFrame = photo;
+      cameraEvents.emit('frame', photo);
+      return { photo, encoding };
+    });
 
-  updateFrameChain
-    .catch((err) => console.error(err))
-    .then(() => restartFrameTimeout());
+  return cameraCurrentOperation;
+}
 
-  return updateFrameChain;
+let frameLastQueued = 0;
+cameraEvents.on('frameQueued', () => { frameLastQueued = Date.now(); });
+
+function queueCaptureFrameCallback(intervalMS) {
+  return () => {
+    if (Date.now() - frameLastQueued < intervalMS) {
+      return;
+    }
+    captureFrame();
+  };
+}
+
+let frameUpdateIntervalHandle = null;
+function updateFramePeriodically(interval = 5e3) {
+  if (!isNumber(interval)) {
+    throw new Error('interval must be a number');
+  }
+
+  if (interval <= 0) {
+    throw new Error('interval must be >= 0');
+  }
+
+  console.log(`changing frame updates to ${interval}s`);
+  if (frameUpdateIntervalHandle) {
+    clearInterval(frameUpdateIntervalHandle);
+    frameUpdateIntervalHandle = null;
+  }
+
+  frameUpdateIntervalHandle = setInterval(queueCaptureFrameCallback(interval), interval);
+  // don't keep node running just for this update (should be the listening on a port instead)
+  frameUpdateIntervalHandle.unref();
 }
 
 module.exports = {

@@ -43,5 +43,5 @@ httpServer.ready((err) => {
 });
 
 // start
-camera.updateFramePeriodically(5);
+camera.updateFramePeriodically(3e3);
 httpServer.listen(HTTP_PORT, '0.0.0.0');
