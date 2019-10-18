@@ -30,21 +30,31 @@ const cameraEvents = new EventEmitter();
 let latestFrame = null;
 let updateFrameHandle = null;
 let lastPeriodicInterval = 5;
+let getFrameCurrentOperation = Promise.resolve();
 
 const getLatestFrame = () => ({ photo: latestFrame, encoding });
 
 function updateFrame() {
-  return raspistill.takePhoto().then((photo) => {
-    latestFrame = photo;
-    cameraEvents.emit('frame', photo);
-    return { photo, encoding };
-  });
+  getFrameCurrentOperation = getFrameCurrentOperation
+    .then(() => raspistill.takePhoto())
+    .then((photo) => {
+      latestFrame = photo;
+      cameraEvents.emit('frame', photo);
+      return { photo, encoding };
+    });
+
+  return getFrameCurrentOperation;
 }
 
 function setOptions() {
-  const settings = { ...userCameraOptions, ...defaultCameraOptions };
-  raspistill.setOptions(settings);
-  cameraEvents.emit('settings', settings);
+  getFrameCurrentOperation = getFrameCurrentOperation
+    .then(() => {
+      const settings = { ...userCameraOptions, ...defaultCameraOptions };
+      console.log('camera: setOptions');
+      raspistill.setOptions(settings);
+      cameraEvents.emit('settings', settings);
+    });
+  return getFrameCurrentOperation;
 }
 
 function setContrast(targetContrast) {
