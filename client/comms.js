@@ -105,6 +105,11 @@ function setCameraBrightness(brightness) {
   sendCommand('setCameraBrightness', [brightness]);
 }
 
+function setCropWindow(cropWindow) {
+  // x, y, width, height
+  sendCommand('setCropWindow', [cropWindow]);
+}
+
 module.exports = {
   // projector
   captureAndAdvance,
@@ -120,6 +125,7 @@ module.exports = {
   setContrast,
   setSaturation,
   setCameraBrightness,
+  setCropWindow,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),
   removeEventListener: (...args) => notifications.removeEventListener(...args),

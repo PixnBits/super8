@@ -1,6 +1,8 @@
 const { Raspistill } = require('node-raspistill');
 const { EventEmitter } = require('events');
 
+const sharp = require('sharp');
+
 const isNumber = require('./utils/isNumber');
 
 const encoding = 'jpg';
@@ -41,7 +43,7 @@ function setOptions() {
 }
 
 function setContrast(targetContrast) {
-  if (!isNumber) {
+  if (!isNumber(targetContrast)) {
     throw new Error('contrast must be a number');
   }
   if (targetContrast > 100 || targetContrast < -100) {
@@ -52,7 +54,7 @@ function setContrast(targetContrast) {
 }
 
 function setSaturation(targetSaturation) {
-  if (!isNumber) {
+  if (!isNumber(targetSaturation)) {
     throw new Error('saturation must be a number');
   }
   if (targetSaturation > 100 || targetSaturation < -100) {
@@ -63,7 +65,7 @@ function setSaturation(targetSaturation) {
 }
 
 function setBrightness(targetBrightness) {
-  if (!isNumber) {
+  if (!isNumber(targetBrightness)) {
     throw new Error('brightness must be a number');
   }
   if (targetBrightness > 100 || targetBrightness < 0) {
@@ -72,6 +74,67 @@ function setBrightness(targetBrightness) {
   userCameraOptions.brightness = targetBrightness;
   return setOptions();
 }
+
+let cropWindow;
+// lots of input validation
+/* eslint-disable-next-line complexity */
+function setCropWindow({
+  left, top, width, height,
+}) {
+  if (!isNumber(left)) {
+    throw new Error('left must be a number');
+  }
+  if (!isNumber(top)) {
+    throw new Error('top must be a number');
+  }
+  if (!isNumber(width)) {
+    throw new Error('width must be a number');
+  }
+  if (!isNumber(height)) {
+    throw new Error('height must be a number');
+  }
+  const usableLeft = Math.max(0, Math.floor(left));
+  const usableTop = Math.max(0, Math.floor(top));
+  const widthCeil = Math.ceil(Math.abs(width));
+  // dimensions for video need to be factors of 2
+  const dimensionedWidth = widthCeil % 2 ? Math.ceil(widthCeil / 2) * 2 : widthCeil;
+  const heightCeil = Math.ceil(Math.abs(height));
+  const dimensionedHeight = heightCeil % 2 ? Math.ceil(heightCeil / 2) * 2 : heightCeil;
+  const usableWidth = usableLeft + dimensionedWidth > defaultCameraOptions.width ? (
+    defaultCameraOptions.width - usableLeft
+  ) : (
+    dimensionedWidth
+  );
+  const usableHeight = usableTop + dimensionedHeight > defaultCameraOptions.height ? (
+    defaultCameraOptions.height - usableTop
+  ) : (
+    dimensionedHeight
+  );
+
+  if (usableLeft >= defaultCameraOptions.width) {
+    throw new Error('x must be in the image dimensions');
+  }
+  if (usableTop >= defaultCameraOptions.height) {
+    throw new Error('y must be in the image dimensions');
+  }
+  if (usableWidth <= 0) {
+    throw new Error('width must be greater than zero');
+  }
+  if (usableWidth <= 0) {
+    throw new Error('width must be greater than zero');
+  }
+
+  cropWindow = {
+    left: usableLeft,
+    top: usableTop,
+    width: usableWidth,
+    height: usableHeight,
+  };
+  cameraEvents.emit('cropWindow', { ...cropWindow });
+}
+setCropWindow({
+  left: 0, top: 0, width: Infinity, height: Infinity,
+});
 
 let latestFrame = null;
 
@@ -88,7 +151,12 @@ function captureFrame() {
     .then(() => raspistill.takePhoto())
     .then((photo) => {
       latestFrame = photo;
-      cameraEvents.emit('frame', photo);
+      return sharp(photo)
+        .extract(cropWindow)
+        .toBuffer();
+    })
+    .then((photo) => {
+      cameraEvents.emit('frame');
       return { photo, encoding };
     });
 
@@ -150,6 +218,7 @@ module.exports = {
   setContrast,
   setSaturation,
   setBrightness,
+  setCropWindow,
   // eventing
   addListener: (...args) => cameraEvents.addListener(...args),
   addOnceListener: (...args) => cameraEvents.once(...args),

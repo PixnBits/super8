@@ -42,6 +42,7 @@ function handleClientMessage(rawMessage) {
 
     case 'setContrast':
     case 'setSaturation':
+    case 'setCropWindow':
       if (!Array.isArray(message.args)) {
         console.warn(`${message.procedure} requires arguments`);
       } else {
@@ -55,11 +56,15 @@ function handleClientMessage(rawMessage) {
 }
 
 function setupComms(webSocketServer) {
+  function sendNotificationToClient(clientWebSocket, notificationName, otherData = {}) {
+    clientWebSocket.send(JSON.stringify({ ...otherData, notification: notificationName }));
+  }
+
   function sendNotificationToEachClient(notificationName, otherData = {}) {
     console.log(`notification: ${notificationName}`, otherData);
-    webSocketServer.clients.forEach((clientWebSocket) => {
-      clientWebSocket.send(JSON.stringify({ ...otherData, notification: notificationName }));
-    });
+    webSocketServer.clients.forEach(
+      (clientWebSocket) => sendNotificationToClient(clientWebSocket, notificationName, otherData)
+    );
   }
 
   let busyOperationName = false; // false for idle
@@ -72,8 +77,15 @@ function setupComms(webSocketServer) {
     sendNotificationToEachClient('busy');
   });
 
-  projector.addListener('lampOn', () => sendNotificationToEachClient('lampOn'));
-  projector.addListener('lampOff', () => sendNotificationToEachClient('lampOff'));
+  let lampIsOn = false;
+  projector.addListener('lampOn', () => {
+    lampIsOn = true;
+    sendNotificationToEachClient('lampOn');
+  });
+  projector.addListener('lampOff', () => {
+    lampIsOn = false;
+    sendNotificationToEachClient('lampOff');
+  });
   let lampBrightness;
   projector.addListener('lampBrightness', (brightness) => {
     lampBrightness = brightness;
@@ -105,12 +117,16 @@ function setupComms(webSocketServer) {
     webSocket.send(JSON.stringify(
       busyOperationName ? { notification: 'busy', operationName: busyOperationName } : { notification: 'idle' }
     ));
+
+    sendNotificationToClient(webSocket, lampIsOn ? 'lampOn' : 'lampOff');
     if (lampBrightness !== undefined) {
       webSocket.send(JSON.stringify({ notification: 'lampBrightness', brightness: lampBrightness }));
     }
+
     if (advanceSpeed !== undefined) {
       webSocket.send(JSON.stringify({ notification: 'advanceSpeed', speed: advanceSpeed }));
     }
+
     if (cameraSettings !== undefined) {
       webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
     }

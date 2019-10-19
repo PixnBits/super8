@@ -17,7 +17,7 @@ export default function useCommsTwoEventBooleanToggle(
       comms.removeEventListener(trueEventName, trueEventListener);
       comms.removeEventListener(falseEventName, falseEventListener);
     };
-  });
+  }, [comms]);
 
   return [booleanState];
 }

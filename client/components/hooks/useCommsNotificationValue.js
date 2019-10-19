@@ -22,7 +22,7 @@ export default function useCommsNotificationValue(
     };
     comms.addEventListener(eventName, eventListener);
     return () => comms.removeEventListener(eventName, eventListener);
-  });
+  }, [comms]);
 
   return [notificationValue];
 }
