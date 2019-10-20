@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import comms from '../comms';
 import useCommsNotificationValue from './hooks/useCommsNotificationValue';
 import useClientRect from './hooks/useClientRect';
 
-// NOTE: this doesn't account for multiple instances of the component
-// (if >1 component they may use different URLs, loading the same data
-// multiple times)
-function getNewFrameSrc() {
-  return `/frame.jpg?t=${Date.now()}`;
+function frameNotification(notification) {
+  // NOTE: this doesn't account for multiple instances of the component
+  // (if >1 component they may use different URLs, loading the same data
+  // multiple times)
+  const imgSrc = `/frame.jpg?t=${Date.now()}`;
+  if (!notification) {
+    return {
+      imgSrc,
+      imgSize: { width: 800, height: 600 },
+    };
+  }
+  const { frame } = notification;
+  const { /* encoding, */ size: { width, height } } = frame;
+  return {
+    imgSrc,
+    imgSize: { width, height },
+  };
 }
 
 const padding = 20;
 
 function FrameImage() {
   const [svgRect, svgRef] = useClientRect(true);
-  const [imgSrc] = useCommsNotificationValue('frame', getNewFrameSrc, getNewFrameSrc);
-  const [imgDims, setImgDims] = useState({ width: 800, height: 600 });
+  const [{ imgSrc, imgSize }] = useCommsNotificationValue('frame', frameNotification, frameNotification);
   const [cropDims, setCropDims] = useState({
-    x1: 0, y1: 0, x2: imgDims.width, y2: imgDims.height,
+    x1: 0, y1: 0, x2: imgSize.width, y2: imgSize.height,
   });
   const cropXLeft = padding + cropDims.x1;
   const cropXRight = padding + cropDims.x2;
@@ -52,13 +63,38 @@ function FrameImage() {
     setCropMovementModes(modes);
   }
 
+  useEffect(() => {
+    const cropWindowCallback = (event) => {
+      const { notification } = event;
+      const {
+        cropWindow: {
+          left,
+          top,
+          width,
+          height,
+        },
+      } = notification;
+      // stop any current operation
+      setCropMovementModes(null);
+      // set the new dims
+      setCropDims({
+        x1: left,
+        y1: top,
+        x2: left + width,
+        y2: top + height,
+      });
+    };
+    comms.addEventListener('cameraCropWindow', cropWindowCallback);
+    return () => comms.removeEventListener('cameraCropWindow', cropWindowCallback);
+  }, comms);
+
   return (
     <p>
       <svg
         version="1.1"
         xmlns="http://www.w3.org/2000/svg"
-        width={imgDims.width + 2 * padding}
-        height={imgDims.height + 2 * padding}
+        width={imgSize.width + 2 * padding}
+        height={imgSize.height + 2 * padding}
         onMouseMove={(event) => {
           if (!cropMovementModes) {
             return;
@@ -67,8 +103,8 @@ function FrameImage() {
           const x = event.pageX - padding - svgRect.x;
           const y = event.pageY - padding - svgRect.y;
 
-          const xClamped = Math.max(Math.min(x, imgDims.width), 0);
-          const yClamped = Math.max(Math.min(y, imgDims.height), 0);
+          const xClamped = Math.max(Math.min(x, imgSize.width), 0);
+          const yClamped = Math.max(Math.min(y, imgSize.height), 0);
 
           const newCropDims = { ...cropDims };
           cropMovementModes.forEach((mode) => {
@@ -95,7 +131,7 @@ function FrameImage() {
         onMouseLeave={finishCropMovement}
         ref={svgRef}
       >
-        <image href={imgSrc} x={padding} y={padding} height={`${imgDims.height}px`} width={`${imgDims.width}px`} />
+        <image href={imgSrc} x={padding} y={padding} height={`${imgSize.height}px`} width={`${imgSize.width}px`} />
 
         <line stroke="red" strokeWidth="5" x1={cropXLeft} x2={cropXRight} y1={cropYTop} y2={cropYTop} onMouseDown={() => startCropMovement(['top'])} />
         <line stroke="red" strokeWidth="5" x1={cropXLeft} x2={cropXRight} y1={cropYBottom} y2={cropYBottom} onMouseDown={() => startCropMovement(['bottom'])} />

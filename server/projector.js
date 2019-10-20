@@ -51,6 +51,20 @@ function waitForPortLines(...lines) {
   });
 }
 
+function emitBusy(skipBusyIdleNotifications = false) {
+  if (skipBusyIdleNotifications) {
+    return;
+  }
+  projectorEvents.emit('busy');
+}
+
+function emitIdle(skipBusyIdleNotifications = false) {
+  if (skipBusyIdleNotifications) {
+    return;
+  }
+  projectorEvents.emit('idle');
+}
+
 function stop() {
   needToStopCaptureAndAdvance = true;
   camera.unpausePeriodicCaptures();
@@ -58,29 +72,28 @@ function stop() {
   currentOperation = currentOperation
     .then(() => writeLineToPort('S'))
     .then(() => waitForPortLines('MOTORS_DISABLED'))
-    .then(() => projectorEvents.emit('idle'));
+    .then(() => emitIdle());
 
   return currentOperation;
 }
 
-function advanceFrame() {
+function advanceFrame(skipBusyIdleNotifications) {
   currentOperation = currentOperation
-    .then(() => projectorEvents.emit('busy'))
+    .then(() => emitBusy(skipBusyIdleNotifications))
     .then(() => writeLineToPort('AF'))
     .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'))
-    .then(() => projectorEvents.emit('idle'));
+    .then(() => emitIdle(skipBusyIdleNotifications));
 
   return currentOperation;
 }
 
 function advance() {
   currentOperation = currentOperation
-    .then(() => projectorEvents.emit('busy'))
+    .then(() => emitBusy())
     .then(() => writeLineToPort('A'));
 
   return currentOperation;
 }
-
 
 function setAdvanceSpeed(speed) {
   if (!isNumber(speed)) {
@@ -106,33 +119,28 @@ function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
   // (too many photos build up due to fs being slower than the stepper motor)
 
   const getFrameChain = currentOperation
-    .then(() => {
-      if (!skipBusyIdleNotifications) {
-        projectorEvents.emit('busy');
-      }
-    })
+    .then(() => emitBusy(skipBusyIdleNotifications))
     .then(() => camera.captureFrame());
 
   currentOperation = getFrameChain
-    .then(() => {
-      if (!skipBusyIdleNotifications) {
-        projectorEvents.emit('idle');
-      }
-    });
+    .then(() => emitIdle(skipBusyIdleNotifications));
 
-  return getFrameChain.then(({ photo, encoding }) => {
+  return getFrameChain.then(({ photo, encoding, size }) => {
     // save photo to filesystem
     const filename = `frame-${frameIdentifier || Date.now()}.${encoding}`;
     const filePath = path.resolve(path.join('/home/pi/Pictures', filename));
     return fsp.writeFile(filePath, photo, { encoding: 'binary' })
-      .then(() => filePath);
+      .then(() => {
+        console.log(`wrote ${filePath}`, size);
+        return filePath;
+      });
   });
 }
 
 function captureAndAdvance(frameNumber = 0) {
   // avoid emitting every capture, advance
   if (frameNumber === 0) {
-    projectorEvents.emit('busy');
+    emitBusy();
     needToStopCaptureAndAdvance = false;
     camera.pausePeriodicCaptures();
   }
@@ -141,7 +149,7 @@ function captureAndAdvance(frameNumber = 0) {
   // viewing the images in order, but we'd need to know the total frame count
   captureFrame(`${frameNumber}`, true)
   // captureFrame(`${frameNumber}`.padStart(8, '0'), true)
-    .then(() => advanceFrame())
+    .then(() => advanceFrame(true))
     .then(() => {
       if (needToStopCaptureAndAdvance) {
         return null;

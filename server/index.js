@@ -23,9 +23,15 @@ httpServer.ready((err) => {
 // camera images
 // TODO: handle different encodings
 httpServer.get('/frame.jpg', (request, reply) => {
-  reply
-    .type('image/jpeg')
-    .send(camera.getLatestFrame().photo);
+  const { photo, encoding } = camera.getLatestFrame();
+  if (!encoding) {
+    reply.status(404).send();
+  } else {
+    console.log('latestFrame encoding', encoding);
+    reply
+      .type(`image/${encoding}`)
+      .send(photo);
+  }
 });
 
 // static content

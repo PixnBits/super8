@@ -3,16 +3,15 @@ const { EventEmitter } = require('events');
 
 const sharp = require('sharp');
 
+const settings = require('./settings');
 const isNumber = require('./utils/isNumber');
-
-const encoding = 'jpg';
 
 const defaultCameraOptions = {
   noFileSave: true,
   noPreview: true,
   time: 1, // 0 doesn't work, but we can make this small to avoid unneeded delay
-  encoding,
-  // defaults to max, 3280 x 2464
+  encoding: 'png',
+  // // defaults to max, 3280 x 2464
   width: 800,
   height: 600,
 };
@@ -34,10 +33,10 @@ let cameraCurrentOperation = Promise.resolve();
 function setOptions() {
   cameraCurrentOperation = cameraCurrentOperation
     .then(() => {
-      const settings = { ...userCameraOptions, ...defaultCameraOptions };
+      const cameraSettings = { ...userCameraOptions, ...defaultCameraOptions };
       console.log('camera: setOptions');
-      raspistill.setOptions(settings);
-      cameraEvents.emit('settings', settings);
+      raspistill.setOptions(cameraSettings);
+      cameraEvents.emit('settings', cameraSettings);
     });
   return cameraCurrentOperation;
 }
@@ -78,9 +77,12 @@ function setBrightness(targetBrightness) {
 let cropWindow;
 // lots of input validation
 /* eslint-disable-next-line complexity */
-function setCropWindow({
-  left, top, width, height,
-}) {
+function setCropWindow(
+  {
+    left, top, width, height,
+  },
+  skipSave = false
+) {
   if (!isNumber(left)) {
     throw new Error('left must be a number');
   }
@@ -131,36 +133,69 @@ function setCropWindow({
     height: usableHeight,
   };
   cameraEvents.emit('cropWindow', { ...cropWindow });
+  if (!skipSave) {
+    settings.set('cropWindow', cropWindow);
+  }
 }
 setCropWindow({
-  left: 0, top: 0, width: Infinity, height: Infinity,
-});
+  // left: 0, top: 0, width: Infinity, height: Infinity,
+  left: 0, top: 0, width: 3280, height: 2464,
+}, true);
+settings.addListener('set:cropWindow', (window) => setCropWindow(window, true));
 
 let latestFrame = null;
 
 function getLatestFrame() {
-  return {
-    photo: latestFrame,
-    encoding,
-  };
+  return { ...latestFrame };
 }
 
-function captureFrame() {
+function toBufferWithInfo(photo) {
+  return new Promise((res, rej) => {
+    sharp(photo).toBuffer((err, buffer, info) => {
+      if (err) {
+        rej(err);
+      } else {
+        res({ buffer, info });
+      }
+    });
+  });
+}
+
+function takePhoto() {
   cameraEvents.emit('frameQueued');
   cameraCurrentOperation = cameraCurrentOperation
-    .then(() => raspistill.takePhoto())
-    .then((photo) => {
-      latestFrame = photo;
-      return sharp(photo)
-        .extract(cropWindow)
-        .toBuffer();
+    .then(() => {
+      console.log('raspistill.takePhoto');
+      return raspistill.takePhoto();
     })
-    .then((photo) => {
-      cameraEvents.emit('frame');
-      return { photo, encoding };
+    .then(toBufferWithInfo)
+    .then(({ buffer, info: { format, width, height } }) => {
+      latestFrame = {
+        photo: buffer,
+        encoding: format,
+        size: {
+          width,
+          height,
+        },
+      };
+      cameraEvents.emit('frame', latestFrame);
+      return latestFrame;
     });
 
   return cameraCurrentOperation;
+}
+
+function captureFrame() {
+  return takePhoto()
+    .then(({ photo, encoding }) => sharp(photo)
+      .extract(cropWindow)
+      .toBuffer()
+      .then((croppedPhoto) => ({
+        photo: croppedPhoto,
+        encoding,
+        size: cropWindow,
+      }))
+    );
 }
 
 let periodicCapturesPaused = false;
@@ -176,7 +211,7 @@ function unpausePeriodicCaptures() {
 let frameLastQueued = 0;
 cameraEvents.on('frameQueued', () => { frameLastQueued = Date.now(); });
 
-function queueCaptureFrameCallback(intervalMS) {
+function queueTakePhotoCallback(intervalMS) {
   return () => {
     if (
       periodicCapturesPaused
@@ -184,7 +219,7 @@ function queueCaptureFrameCallback(intervalMS) {
     ) {
       return;
     }
-    captureFrame();
+    takePhoto();
   };
 }
 
@@ -198,15 +233,16 @@ function updateFramePeriodically(interval = 5e3) {
     throw new Error('interval must be >= 0');
   }
 
-  console.log(`changing frame updates to ${interval}s`);
+  console.log(`changing frame updates to ${interval}ms`);
   if (frameUpdateIntervalHandle) {
     clearInterval(frameUpdateIntervalHandle);
     frameUpdateIntervalHandle = null;
   }
 
-  frameUpdateIntervalHandle = setInterval(queueCaptureFrameCallback(interval), interval);
+  frameUpdateIntervalHandle = setInterval(queueTakePhotoCallback(interval), interval);
   // don't keep node running just for this update (should be the listening on a port instead)
   frameUpdateIntervalHandle.unref();
+  return takePhoto();
 }
 
 module.exports = {

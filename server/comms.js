@@ -97,12 +97,18 @@ function setupComms(webSocketServer) {
     sendNotificationToEachClient('advanceSpeed', { speed });
   });
 
-  camera.addListener('frame', () => sendNotificationToEachClient('frame'));
+  camera.addListener('frame', ({ encoding, size }) => sendNotificationToEachClient('frame', { frame: { encoding, size } }));
 
   let cameraSettings;
   camera.addListener('settings', (settings) => {
     cameraSettings = settings;
     sendNotificationToEachClient('cameraSettings', { settings });
+  });
+
+  let cameraCropWindow;
+  camera.addListener('cropWindow', (cropWindow) => {
+    cameraCropWindow = cropWindow;
+    sendNotificationToEachClient('cameraCropWindow', { cropWindow });
   });
 
   webSocketServer.on('connection', (webSocket) => {
@@ -129,6 +135,10 @@ function setupComms(webSocketServer) {
 
     if (cameraSettings !== undefined) {
       webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
+    }
+
+    if (cameraCropWindow !== undefined) {
+      webSocket.send(JSON.stringify({ notification: 'cameraCropWindow', cropWindow: cameraCropWindow }));
     }
   });
 }
