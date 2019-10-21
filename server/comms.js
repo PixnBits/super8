@@ -96,6 +96,8 @@ function setupComms(webSocketServer) {
     advanceSpeed = speed;
     sendNotificationToEachClient('advanceSpeed', { speed });
   });
+  projector.addListener('captureStats', (stats) => sendNotificationToEachClient('captureStats', { stats }));
+  projector.addListener('fileWritten', (filePath) => sendNotificationToEachClient('fileWritten', { filePath }));
 
   camera.addListener('frame', ({ encoding, size }) => sendNotificationToEachClient('frame', { frame: { encoding, size } }));
 

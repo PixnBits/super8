@@ -132,14 +132,15 @@ function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
     return fsp.writeFile(filePath, photo, { encoding: 'binary' })
       .then(() => {
         console.log(`wrote ${filePath}`, size);
+        projectorEvents.emit('fileWritten', filePath);
         return filePath;
       });
   });
 }
 
-function captureAndAdvance(frameNumber = 0) {
+function captureAndAdvance(frameNumber = 0, stats = { frameCount: 0, started: Date.now() }) {
   // avoid emitting every capture, advance
-  if (frameNumber === 0) {
+  if (stats.frameCount === 0) {
     emitBusy();
     needToStopCaptureAndAdvance = false;
     camera.pausePeriodicCaptures();
@@ -151,10 +152,17 @@ function captureAndAdvance(frameNumber = 0) {
   // captureFrame(`${frameNumber}`.padStart(8, '0'), true)
     .then(() => advanceFrame(true))
     .then(() => {
+      const presentStats = { ...stats };
+      presentStats.frameCount += 1;
+      const now = Date.now();
+      projectorEvents.emit('captureStats', { ...presentStats, now });
+      const secondsElapsed = Math.round((now - presentStats.started) / 1e3);
+      console.log(`${presentStats.frameCount} in ${secondsElapsed}s, or ${presentStats.frameCount / secondsElapsed} fps (${secondsElapsed / presentStats.frameCount} spf)`);
       if (needToStopCaptureAndAdvance) {
-        return null;
+        presentStats.finished = now;
+        return presentStats;
       }
-      return captureAndAdvance(frameNumber + 1);
+      return captureAndAdvance(frameNumber + 1, presentStats);
     });
 }
 

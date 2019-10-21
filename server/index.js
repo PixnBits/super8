@@ -27,7 +27,6 @@ httpServer.get('/frame.jpg', (request, reply) => {
   if (!encoding) {
     reply.status(404).send();
   } else {
-    console.log('latestFrame encoding', encoding);
     reply
       .type(`image/${encoding}`)
       .send(photo);

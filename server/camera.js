@@ -10,10 +10,12 @@ const defaultCameraOptions = {
   noFileSave: true,
   noPreview: true,
   time: 1, // 0 doesn't work, but we can make this small to avoid unneeded delay
-  encoding: 'png',
-  // // defaults to max, 3280 x 2464
-  width: 800,
-  height: 600,
+  // encoding: 'png', // not hardware accelerated, and it's noticable
+  encoding: 'jpg', // hardware accelerated
+  quality: 100,
+  // defaults to max, 3280 x 2464
+  // width: 800,
+  // height: 600,
 };
 // https://www.npmjs.com/package/node-raspistill#constructoroptions-icameraoptions
 const userCameraOptions = {
@@ -164,10 +166,7 @@ function toBufferWithInfo(photo) {
 function takePhoto() {
   cameraEvents.emit('frameQueued');
   cameraCurrentOperation = cameraCurrentOperation
-    .then(() => {
-      console.log('raspistill.takePhoto');
-      return raspistill.takePhoto();
-    })
+    .then(() => raspistill.takePhoto())
     .then(toBufferWithInfo)
     .then(({ buffer, info: { format, width, height } }) => {
       latestFrame = {
@@ -210,12 +209,19 @@ function unpausePeriodicCaptures() {
 
 let frameLastQueued = 0;
 cameraEvents.on('frameQueued', () => { frameLastQueued = Date.now(); });
+cameraEvents.on('frameQueued', () => console.log('frameQueued'));
+let frameLastObtained = 0;
+cameraEvents.on('frame', () => { frameLastObtained = Date.now(); });
 
 function queueTakePhotoCallback(intervalMS) {
   return () => {
+    const captureAlreadyQueued = frameLastQueued >= frameLastObtained;
+    const frameLastObtainedTooRecent = (Date.now() - frameLastObtained) < intervalMS;
+    console.log('queueTakePhotoCallback, paused?', periodicCapturesPaused, 'captureAlreadyQueued', captureAlreadyQueued, 'frameLastObtainedTooRecent', frameLastObtainedTooRecent);
     if (
       periodicCapturesPaused
-      || Date.now() - frameLastQueued < intervalMS
+      || captureAlreadyQueued
+      || frameLastObtainedTooRecent
     ) {
       return;
     }
