@@ -9,10 +9,13 @@ const Readline = require('@serialport/parser-readline');
 const isNumber = require('./utils/isNumber');
 
 const fsp = {
+  mkdir: promisify(fs.mkdir),
   writeFile: promisify(fs.writeFile),
 };
 
 const camera = require('./camera');
+
+const ROOT_SAVE_FOLDER = '/home/pi/Pictures';
 
 const port = new SerialPort('/dev/ttyACM0', { baudRate: 9600 });
 const portLines = port.pipe(new Readline({ delimiter: '\r\n' }));
@@ -111,7 +114,7 @@ function setAdvanceSpeed(speed) {
 }
 
 // skipBusyIdleNotifications means the calling function whill handle those manually
-function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
+function captureFrame(frameIdentifier, folderName = '', skipBusyIdleNotifications = false) {
   // we need the projector to hold still while we capture the frame
   // but the projector can move while we save to disk
   // so the current (projector) operation doesn't need to include the fs op
@@ -128,8 +131,19 @@ function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
   return getFrameChain.then(({ photo, encoding, size }) => {
     // save photo to filesystem
     const filename = `frame-${frameIdentifier || Date.now()}.${encoding}`;
-    const filePath = path.resolve(path.join('/home/pi/Pictures', filename));
-    return fsp.writeFile(filePath, photo, { encoding: 'binary' })
+    const filePath = path.resolve(path.join(ROOT_SAVE_FOLDER, folderName, filename));
+    if (!filePath.startsWith(ROOT_SAVE_FOLDER)) {
+      return Promise.reject(new Error('possibly dangerous folder name'));
+    }
+    return fsp.mkdir(path.dirname(filePath))
+      .catch((err) => {
+        if (err.code === 'EEXIST') {
+          // actually a success
+          return;
+        }
+        throw err;
+      })
+      .then(() => fsp.writeFile(filePath, photo, { encoding: 'binary' }))
       .then(() => {
         console.log(`wrote ${filePath}`, size);
         projectorEvents.emit('fileWritten', filePath);
@@ -138,7 +152,11 @@ function captureFrame(frameIdentifier, skipBusyIdleNotifications = false) {
   });
 }
 
-function captureAndAdvance(frameNumber = 0, stats = { frameCount: 0, started: Date.now() }) {
+function captureAndAdvance(
+  folderName = `capture-group-${Date.now()}`,
+  frameNumber = 0,
+  stats = { frameCount: 0, started: Date.now() }
+) {
   // avoid emitting every capture, advance
   if (stats.frameCount === 0) {
     emitBusy();
@@ -146,10 +164,7 @@ function captureAndAdvance(frameNumber = 0, stats = { frameCount: 0, started: Da
     camera.pausePeriodicCaptures();
   }
 
-  // To pad or not to pad.... might be helpful for certain tools and even just
-  // viewing the images in order, but we'd need to know the total frame count
-  captureFrame(`${frameNumber}`, true)
-  // captureFrame(`${frameNumber}`.padStart(8, '0'), true)
+  captureFrame(`${frameNumber}`, folderName, true)
     .then(() => advanceFrame(true))
     .then(() => {
       const presentStats = { ...stats };
@@ -162,7 +177,7 @@ function captureAndAdvance(frameNumber = 0, stats = { frameCount: 0, started: Da
         presentStats.finished = now;
         return presentStats;
       }
-      return captureAndAdvance(frameNumber + 1, presentStats);
+      return captureAndAdvance(folderName, frameNumber + 1, presentStats);
     });
 }
 

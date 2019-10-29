@@ -20,7 +20,7 @@ function handleClientMessage(rawMessage) {
     case 'captureAndAdvance':
     case 'lampOn':
     case 'lampOff':
-      projector[message.procedure]();
+      projector[message.procedure](...(message.args || []));
       return;
 
     case 'setAdvanceSpeed':
