@@ -1,0 +1,10 @@
+[Unit]
+Description=Super Eight film digitization server
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/pi/.config/nvm/versions/node/v12.11.1/bin/node /home/pi/Desktop/super8/server
+
+[Install]
+WantedBy=multi-user.target
