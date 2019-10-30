@@ -98,6 +98,16 @@ function advance() {
   return currentOperation;
 }
 
+function rewind() {
+  currentOperation = currentOperation
+    .then(() => emitBusy())
+    // intended as "reverse", but used for "rewind" after discovering the machine
+    // doens't like the film in the gate
+    .then(() => writeLineToPort('R'));
+
+  return currentOperation;
+}
+
 function setAdvanceSpeed(speed) {
   if (!isNumber(speed)) {
     return Promise.reject(new Error('speed must be a number'));
@@ -226,6 +236,7 @@ module.exports = {
   advanceFrame,
   advance,
   setAdvanceSpeed,
+  rewind,
   captureFrame,
   captureAndAdvance,
   lampOn,

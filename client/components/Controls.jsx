@@ -17,6 +17,15 @@ function Controls() {
 
   const disableAllControls = !commsConnected;
 
+  function rewind() {
+    // not damaging archival material is really important, stopping the world is appropriate IMO
+    if (window.confirm(
+      'WARNING: Reversing while the film is in the gate can damage the film!\nEnsure the film is out of the gate.'
+    )) {
+      comms.rewind();
+    }
+  }
+
   // TODO: debounce calls to comm.setContrast & setSaturation
   return (
     <React.Fragment>
@@ -27,6 +36,7 @@ function Controls() {
         <button type="button" className="btn btn-primary mr-2" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.advanceFrame()}>Advance Frame</button>
         <button type="button" className="btn btn-primary mr-2" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.captureFrame()}>Capture Frame</button>
         <button type="button" className="btn btn-secondary" disabled={disableAllControls || isProjectorBusy} onClick={() => comms.advance()}>Advance</button>
+        <button type="button" className="btn btn-danger" disabled={disableAllControls || isProjectorBusy} onClick={rewind}>Rewind</button>
       </p>
       <p>
         Brightness

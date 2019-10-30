@@ -77,6 +77,10 @@ function advance() {
   sendCommand('advance');
 }
 
+function rewind() {
+  sendCommand('rewind');
+}
+
 function setLampBrightness(brightness) {
   sendCommand('setLampBrightness', [brightness]);
 }
@@ -117,6 +121,7 @@ module.exports = {
   advanceFrame,
   captureFrame,
   advance,
+  rewind,
   setLampBrightness,
   lampOn,
   lampOff,

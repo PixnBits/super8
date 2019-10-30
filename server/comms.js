@@ -17,6 +17,7 @@ function handleClientMessage(rawMessage) {
     case 'advanceFrame':
     case 'captureFrame':
     case 'advance':
+    case 'rewind':
     case 'captureAndAdvance':
     case 'lampOn':
     case 'lampOff':
