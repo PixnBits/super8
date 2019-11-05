@@ -97,18 +97,6 @@ function setAdvanceSpeed(speed) {
   sendCommand('setAdvanceSpeed', [speed]);
 }
 
-function setContrast(contrast) {
-  sendCommand('setContrast', [contrast]);
-}
-
-function setSaturation(saturation) {
-  sendCommand('setSaturation', [saturation]);
-}
-
-function setCameraBrightness(brightness) {
-  sendCommand('setCameraBrightness', [brightness]);
-}
-
 function setCropWindow(cropWindow) {
   // x, y, width, height
   sendCommand('setCropWindow', [cropWindow]);
@@ -127,9 +115,6 @@ module.exports = {
   lampOff,
   setAdvanceSpeed,
   // camera
-  setContrast,
-  setSaturation,
-  setCameraBrightness,
   setCropWindow,
   // eventing
   addEventListener: (...args) => notifications.addEventListener(...args),

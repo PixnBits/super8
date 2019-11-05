@@ -1,80 +1,19 @@
-const { Raspistill } = require('node-raspistill');
 const { EventEmitter } = require('events');
 
 const sharp = require('sharp');
 
 const settings = require('./settings');
 const isNumber = require('./utils/isNumber');
+const Raspistill = require('./utils/Raspistill');
 
-const defaultCameraOptions = {
-  noFileSave: true,
-  noPreview: true,
-  time: 1, // 0 doesn't work, but we can make this small to avoid unneeded delay
-  // encoding: 'png', // not hardware accelerated, and it's noticable
-  encoding: 'jpg', // hardware accelerated
-  quality: 100,
-  // defaults to max, 3280 x 2464
-  // width: 800,
-  // height: 600,
-};
-// https://www.npmjs.com/package/node-raspistill#constructoroptions-icameraoptions
-const userCameraOptions = {
-  // (-100 ... 100). If undefined - raspistill util use contrast 0 value
-  contrast: 0,
-  // 50 is the default, 0 to 100 per raspistill binary
-  brightness: 50,
-  // (-100 ... 100). Raspistill util uses 0 value if undefined
-  saturation: 0,
-};
-const raspistill = new Raspistill(defaultCameraOptions);
+const raspistill = new Raspistill();
 
 const cameraEvents = new EventEmitter();
 
 let cameraCurrentOperation = Promise.resolve();
 
-function setOptions() {
-  cameraCurrentOperation = cameraCurrentOperation
-    .then(() => {
-      const cameraSettings = { ...userCameraOptions, ...defaultCameraOptions };
-      console.log('camera: setOptions');
-      raspistill.setOptions(cameraSettings);
-      cameraEvents.emit('settings', cameraSettings);
-    });
-  return cameraCurrentOperation;
-}
-
-function setContrast(targetContrast) {
-  if (!isNumber(targetContrast)) {
-    throw new Error('contrast must be a number');
-  }
-  if (targetContrast > 100 || targetContrast < -100) {
-    throw new Error('contrast must be between -100 and 100');
-  }
-  userCameraOptions.contrast = targetContrast;
-  return setOptions();
-}
-
-function setSaturation(targetSaturation) {
-  if (!isNumber(targetSaturation)) {
-    throw new Error('saturation must be a number');
-  }
-  if (targetSaturation > 100 || targetSaturation < -100) {
-    throw new Error('saturation must be between -100 and 100');
-  }
-  userCameraOptions.saturation = targetSaturation;
-  return setOptions();
-}
-
-function setBrightness(targetBrightness) {
-  if (!isNumber(targetBrightness)) {
-    throw new Error('brightness must be a number');
-  }
-  if (targetBrightness > 100 || targetBrightness < 0) {
-    throw new Error('brightness must be between 0 and 100');
-  }
-  userCameraOptions.brightness = targetBrightness;
-  return setOptions();
-}
+const MAX_WIDTH = 3280;
+const MAX_HEIGHT = 2464;
 
 let cropWindow;
 // lots of input validation
@@ -104,21 +43,21 @@ function setCropWindow(
   const dimensionedWidth = widthCeil % 2 ? Math.ceil(widthCeil / 2) * 2 : widthCeil;
   const heightCeil = Math.ceil(Math.abs(height));
   const dimensionedHeight = heightCeil % 2 ? Math.ceil(heightCeil / 2) * 2 : heightCeil;
-  const usableWidth = usableLeft + dimensionedWidth > defaultCameraOptions.width ? (
-    defaultCameraOptions.width - usableLeft
+  const usableWidth = usableLeft + dimensionedWidth > MAX_WIDTH ? (
+    MAX_WIDTH - usableLeft
   ) : (
     dimensionedWidth
   );
-  const usableHeight = usableTop + dimensionedHeight > defaultCameraOptions.height ? (
-    defaultCameraOptions.height - usableTop
+  const usableHeight = usableTop + dimensionedHeight > MAX_HEIGHT ? (
+    MAX_HEIGHT - usableTop
   ) : (
     dimensionedHeight
   );
 
-  if (usableLeft >= defaultCameraOptions.width) {
+  if (usableLeft >= MAX_WIDTH) {
     throw new Error('x must be in the image dimensions');
   }
-  if (usableTop >= defaultCameraOptions.height) {
+  if (usableTop >= MAX_HEIGHT) {
     throw new Error('y must be in the image dimensions');
   }
   if (usableWidth <= 0) {
@@ -140,8 +79,7 @@ function setCropWindow(
   }
 }
 setCropWindow({
-  // left: 0, top: 0, width: Infinity, height: Infinity,
-  left: 0, top: 0, width: 3280, height: 2464,
+  left: 0, top: 0, width: MAX_WIDTH, height: MAX_HEIGHT,
 }, true);
 settings.addListener('set:cropWindow', (window) => setCropWindow(window, true));
 
@@ -152,23 +90,37 @@ function getLatestFrame() {
 }
 
 function toBufferWithInfo(photo) {
-  return new Promise((res, rej) => {
-    sharp(photo).toBuffer((err, buffer, info) => {
-      if (err) {
-        rej(err);
-      } else {
-        res({ buffer, info });
-      }
-    });
-  });
+  // sharp().toBuffer took about 900ms
+  // TODO: can revert back when we do this on the first frame
+  // then we can store the info, and freeze settings from changing until stop() is called
+  return new Promise((res) => res({
+    buffer: photo,
+    info: {
+      format: 'jpeg',
+      width: MAX_WIDTH,
+      height: MAX_HEIGHT,
+    },
+  }));
 }
 
 function takePhoto() {
+  console.time('camera takePhoto stages');
+  console.time('emit frameQueued');
   cameraEvents.emit('frameQueued');
+  console.timeEnd('emit frameQueued');
   cameraCurrentOperation = cameraCurrentOperation
-    .then(() => raspistill.takePhoto())
+    .then(() => {
+      console.time('raspistill takePhoto');
+      return raspistill.takePhoto()
+        .then((v) => {
+          console.timeEnd('raspistill takePhoto');
+          console.timeLog('camera takePhoto stages');
+          return v;
+        });
+    })
     .then(toBufferWithInfo)
     .then(({ buffer, info: { format, width, height } }) => {
+      console.timeEnd('camera takePhoto stages');
       latestFrame = {
         photo: buffer,
         encoding: format,
@@ -177,7 +129,7 @@ function takePhoto() {
           height,
         },
       };
-      cameraEvents.emit('frame', latestFrame);
+      setTimeout(() => cameraEvents.emit('frame', latestFrame), 1007);
       return latestFrame;
     });
 
@@ -185,16 +137,23 @@ function takePhoto() {
 }
 
 function captureFrame() {
+  console.time('captureFrame call of takePhoto');
   return takePhoto()
-    .then(({ photo, encoding }) => sharp(photo)
-      .extract(cropWindow)
-      .toBuffer()
-      .then((croppedPhoto) => ({
-        photo: croppedPhoto,
-        encoding,
-        size: cropWindow,
-      }))
-    );
+    .then(({ photo, encoding }) => {
+      console.timeEnd('captureFrame call of takePhoto');
+      console.time('extract & toBuffer');
+      return sharp(photo)
+        .extract(cropWindow)
+        .toBuffer()
+        .then((croppedPhoto) => {
+          console.timeEnd('extract & toBuffer');
+          return {
+            photo: croppedPhoto,
+            encoding,
+            size: cropWindow,
+          };
+        });
+    });
 }
 
 let periodicCapturesPaused = false;
@@ -256,9 +215,6 @@ module.exports = {
   pausePeriodicCaptures,
   unpausePeriodicCaptures,
   captureFrame,
-  setContrast,
-  setSaturation,
-  setBrightness,
   setCropWindow,
   // eventing
   addListener: (...args) => cameraEvents.addListener(...args),

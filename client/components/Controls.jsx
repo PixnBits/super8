@@ -12,8 +12,6 @@ function Controls() {
   const [isLampOn] = useCommsTwoEventBooleanToggle('lampOn', 'lampOff', false);
   const [lampBrightness] = useCommsNotificationValue('lampBrightness', 'brightness', 25);
   const [advanceSpeed] = useCommsNotificationValue('advanceSpeed', 'speed', 3200);
-  // camera
-  const [cameraSettings] = useCommsNotificationValue('cameraSettings', 'settings', { contrast: 0, saturation: 0, brightness: 50 });
 
   const disableAllControls = !commsConnected;
 
@@ -67,52 +65,6 @@ function Controls() {
             disabled={disableAllControls}
             value={advanceSpeed}
             onChange={(event) => comms.setAdvanceSpeed(parseInt(event.target.value, 10))}
-            className="ml-1"
-          />
-        </label>
-      </p>
-
-      <h3>Camera</h3>
-      <p>
-        <label htmlFor="contrast-setting" className="mr-2">
-          Contrast
-          <input
-            id="contrast-setting"
-            type="range"
-            min="-100"
-            max="100"
-            step="1"
-            disabled={disableAllControls}
-            value={cameraSettings.contrast}
-            onChange={(event) => comms.setContrast(parseInt(event.target.value, 10))}
-            className="ml-1"
-          />
-        </label>
-        <label htmlFor="saturation-setting" className="mr-2">
-          Saturation
-          <input
-            id="saturation-setting"
-            type="range"
-            min="-100"
-            max="100"
-            step="1"
-            disabled={disableAllControls}
-            value={cameraSettings.saturation}
-            onChange={(event) => comms.setSaturation(parseInt(event.target.value, 10))}
-            className="ml-1"
-          />
-        </label>
-        <label htmlFor="camera-brightness-setting">
-          Brightness
-          <input
-            id="camera-brightness-setting"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            disabled={disableAllControls}
-            value={cameraSettings.cameraBrightness}
-            onChange={(event) => comms.setCameraBrightness(parseInt(event.target.value, 10))}
             className="ml-1"
           />
         </label>

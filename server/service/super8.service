@@ -4,6 +4,8 @@ After=multi-user.target
 
 [Service]
 Type=simple
+User=pi
+Group=pi
 ExecStart=/home/pi/.config/nvm/versions/node/v12.11.1/bin/node /home/pi/Desktop/super8/server
 
 [Install]
