@@ -217,7 +217,6 @@ function queueTakePhotoCallback(intervalMS) {
   return () => {
     const captureAlreadyQueued = frameLastQueued >= frameLastObtained;
     const frameLastObtainedTooRecent = (Date.now() - frameLastObtained) < intervalMS;
-    console.log('queueTakePhotoCallback, paused?', periodicCapturesPaused, 'captureAlreadyQueued', captureAlreadyQueued, 'frameLastObtainedTooRecent', frameLastObtainedTooRecent);
     if (
       periodicCapturesPaused
       || captureAlreadyQueued

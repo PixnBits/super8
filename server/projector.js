@@ -83,8 +83,12 @@ function stop() {
 function advanceFrame(skipBusyIdleNotifications) {
   currentOperation = currentOperation
     .then(() => emitBusy(skipBusyIdleNotifications))
-    .then(() => writeLineToPort('AF'))
+    .then(() => {
+      console.time('advanceFrame');
+      return writeLineToPort('AF');
+    })
     .then(() => waitForPortLines('MOTION_STOPPED', 'MOTORS_DISABLED'))
+    .then(() => console.timeEnd('advanceFrame'))
     .then(() => emitIdle(skipBusyIdleNotifications));
 
   return currentOperation;
@@ -133,18 +137,24 @@ function captureFrame(frameIdentifier, folderName = '', skipBusyIdleNotification
 
   const getFrameChain = currentOperation
     .then(() => emitBusy(skipBusyIdleNotifications))
-    .then(() => camera.captureFrame());
+    .then(() => {
+      console.time('camera captureFrame');
+      return camera.captureFrame();
+    });
 
   currentOperation = getFrameChain
     .then(() => emitIdle(skipBusyIdleNotifications));
 
   return getFrameChain.then(({ photo, encoding, size }) => {
+    console.timeEnd('camera captureFrame');
     // save photo to filesystem
     const filename = `frame-${frameIdentifier || Date.now()}.${encoding}`;
     const filePath = path.resolve(path.join(ROOT_SAVE_FOLDER, folderName, filename));
     if (!filePath.startsWith(ROOT_SAVE_FOLDER)) {
       return Promise.reject(new Error('possibly dangerous folder name'));
     }
+
+    console.time('dir & file');
     return fsp.mkdir(path.dirname(filePath))
       .catch((err) => {
         if (err.code === 'EEXIST') {
@@ -155,6 +165,7 @@ function captureFrame(frameIdentifier, folderName = '', skipBusyIdleNotification
       })
       .then(() => fsp.writeFile(filePath, photo, { encoding: 'binary' }))
       .then(() => {
+        console.timeEnd('dir & file');
         console.log(`wrote ${filePath}`, size);
         projectorEvents.emit('fileWritten', filePath);
         return filePath;
@@ -174,8 +185,12 @@ function captureAndAdvance(
     camera.pausePeriodicCaptures();
   }
 
+  console.time('projector captureFrame');
   captureFrame(`${frameNumber}`, folderName, true)
-    .then(() => advanceFrame(true))
+    .then(() => {
+      console.timeEnd('projector captureFrame');
+      return advanceFrame(true);
+    })
     .then(() => {
       const presentStats = { ...stats };
       presentStats.frameCount += 1;
