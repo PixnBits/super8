@@ -12,11 +12,17 @@ function Notifications() {
   // projector
   useCommsNotificationValue(
     'captureStats',
-    ({ stats: { frameCount, started, now } }) => {
+    ({
+      stats: {
+        capturedFrameCount, savedFrameCount, started, now,
+      },
+    }) => {
       const secondsElapsed = Math.round((now - started) / 1e3);
       // allNotifications reference here is only the first value
-      // TODO: refactor this clumbsy approach (in every usage)
-      allNotifications.captureStats = `${frameCount} frames in ${secondsElapsed}s, or ${friendlyRound(frameCount / secondsElapsed)} fps (${friendlyRound(secondsElapsed / frameCount)} spf)`;
+      // TODO: refactor this clumsy approach (in every usage)
+      allNotifications.captureStats = ''
+        + `captured ${capturedFrameCount} frames in ${secondsElapsed}s, or ${friendlyRound(capturedFrameCount / secondsElapsed)} fps (${friendlyRound(secondsElapsed / capturedFrameCount)} spf)\n`
+        + `saved ${savedFrameCount} frames in ${secondsElapsed}s, or ${friendlyRound(savedFrameCount / secondsElapsed)} fps (${friendlyRound(secondsElapsed / savedFrameCount)} spf)`;
       setNotifications({ ...allNotifications });
     },
     null
