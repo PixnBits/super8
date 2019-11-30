@@ -33,16 +33,6 @@ function handleClientMessage(rawMessage) {
       }
       return;
 
-    case 'setCameraBrightness':
-      if (!Array.isArray(message.args)) {
-        console.warn(`${message.procedure} requires arguments`);
-      } else {
-        camera.setBrightness(...message.args);
-      }
-      return;
-
-    case 'setContrast':
-    case 'setSaturation':
     case 'setCropWindow':
       if (!Array.isArray(message.args)) {
         console.warn(`${message.procedure} requires arguments`);
@@ -63,9 +53,9 @@ function setupComms(webSocketServer) {
 
   function sendNotificationToEachClient(notificationName, otherData = {}) {
     console.log(`notification: ${notificationName}`, otherData);
-    webSocketServer.clients.forEach(
-      (clientWebSocket) => sendNotificationToClient(clientWebSocket, notificationName, otherData)
-    );
+    webSocketServer.clients.forEach((clientWebSocket) => {
+      setTimeout(() => sendNotificationToClient(clientWebSocket, notificationName, otherData), 0);
+    });
   }
 
   let busyOperationName = false; // false for idle
@@ -102,12 +92,6 @@ function setupComms(webSocketServer) {
 
   camera.addListener('frame', ({ encoding, size }) => sendNotificationToEachClient('frame', { frame: { encoding, size } }));
 
-  let cameraSettings;
-  camera.addListener('settings', (settings) => {
-    cameraSettings = settings;
-    sendNotificationToEachClient('cameraSettings', { settings });
-  });
-
   let cameraCropWindow;
   camera.addListener('cropWindow', (cropWindow) => {
     cameraCropWindow = cropWindow;
@@ -134,10 +118,6 @@ function setupComms(webSocketServer) {
 
     if (advanceSpeed !== undefined) {
       webSocket.send(JSON.stringify({ notification: 'advanceSpeed', speed: advanceSpeed }));
-    }
-
-    if (cameraSettings !== undefined) {
-      webSocket.send(JSON.stringify({ notification: 'cameraSettings', settings: cameraSettings }));
     }
 
     if (cameraCropWindow !== undefined) {
