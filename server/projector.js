@@ -135,17 +135,20 @@ function captureFrame(frameIdentifier, folderName = '', skipBusyIdleNotification
   // but we should return the fs op chain to avoid keeping too much data in memory
   // (too many photos build up due to fs being slower than the stepper motor)
 
-  const getFrameChain = currentOperation
+  const getFramePromise = currentOperation
     .then(() => emitBusy(skipBusyIdleNotifications))
     .then(() => {
       console.time('camera captureFrame');
       return camera.captureFrame();
     });
 
-  currentOperation = getFrameChain
+  const getCroppedFramePromise = getFramePromise
+    .then(({ cropPromise }) => cropPromise);
+
+  currentOperation = getFramePromise
     .then(() => emitIdle(skipBusyIdleNotifications));
 
-  return getFrameChain.then(({ photo, encoding, size }) => {
+  const saveFramePromise = getCroppedFramePromise.then(({ photo, encoding, size }) => {
     console.timeEnd('camera captureFrame');
     // save photo to filesystem
     const filename = `frame-${frameIdentifier || Date.now()}.${encoding}`;
@@ -171,38 +174,59 @@ function captureFrame(frameIdentifier, folderName = '', skipBusyIdleNotification
         return filePath;
       });
   });
+
+  return { getFramePromise, getCroppedFramePromise, saveFramePromise };
 }
 
 function captureAndAdvance(
   folderName = `capture-group-${Date.now()}`,
   frameNumber = 0,
-  stats = { frameCount: 0, started: Date.now() }
+  stats = { capturedFrameCount: 0, savedFrameCount: 0, started: Date.now() }
 ) {
   // avoid emitting every capture, advance
-  if (stats.frameCount === 0) {
+  if (stats.capturedFrameCount === 0) {
     emitBusy();
     needToStopCaptureAndAdvance = false;
     camera.pausePeriodicCaptures();
   }
 
   console.time('projector captureFrame');
-  captureFrame(`${frameNumber}`, folderName, true)
+  const { getFramePromise, saveFramePromise } = captureFrame(`${frameNumber}`, folderName, true);
+
+  const getFrame = getFramePromise
+    .then(() => advanceFrame(true))
     .then(() => {
-      console.timeEnd('projector captureFrame');
-      return advanceFrame(true);
-    })
-    .then(() => {
-      const presentStats = { ...stats };
-      presentStats.frameCount += 1;
+      // stats could be updated in multiple Promise branches, need the same instance
+      // eslint-disable-next-line no-param-reassign
+      stats.capturedFrameCount += 1;
       const now = Date.now();
-      projectorEvents.emit('captureStats', { ...presentStats, now });
-      const secondsElapsed = Math.round((now - presentStats.started) / 1e3);
-      console.log(`${presentStats.frameCount} in ${secondsElapsed}s, or ${presentStats.frameCount / secondsElapsed} fps (${secondsElapsed / presentStats.frameCount} spf)`);
+      projectorEvents.emit('captureStats', { ...stats, now });
+      const secondsElapsed = Math.round((now - stats.started) / 1e3);
+      console.log(`captured ${stats.capturedFrameCount} in ${secondsElapsed}s, or ${stats.capturedFrameCount / secondsElapsed} fps (${secondsElapsed / stats.capturedFrameCount} spf)`);
+    });
+
+  const saveFrame = saveFramePromise
+    .then(() => {
+      // stats could be updated in multiple Promise branches, need the same instance
+      // eslint-disable-next-line no-param-reassign
+      stats.savedFrameCount += 1;
+      const now = Date.now();
+      projectorEvents.emit('captureStats', { ...stats, now });
+      const secondsElapsed = Math.round((now - stats.started) / 1e3);
+      console.log(`saved ${stats.savedFrameCount} in ${secondsElapsed}s, or ${stats.savedFrameCount / secondsElapsed} fps (${secondsElapsed / stats.savedFrameCount} spf)`);
+    });
+
+  // FIXME: wait for these filesystem operations to finish if they're taking too long
+  // currently, they're 1-3ms total, while taking a picture and cropping take around 700ms each
+  // so fs ops are not the bottleneck
+  const needToWaitForSaves = false;
+
+  return (needToWaitForSaves ? saveFrame : getFrame)
+    .then(() => {
       if (needToStopCaptureAndAdvance) {
-        presentStats.finished = now;
-        return presentStats;
+        return stats;
       }
-      return captureAndAdvance(folderName, frameNumber + 1, presentStats);
+      return captureAndAdvance(folderName, frameNumber + 1, stats);
     });
 }
 

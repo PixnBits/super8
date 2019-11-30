@@ -129,7 +129,7 @@ function takePhoto() {
           height,
         },
       };
-      setTimeout(() => cameraEvents.emit('frame', latestFrame), 1007);
+      setTimeout(() => cameraEvents.emit('frame', latestFrame), 100);
       return latestFrame;
     });
 
@@ -142,17 +142,19 @@ function captureFrame() {
     .then(({ photo, encoding }) => {
       console.timeEnd('captureFrame call of takePhoto');
       console.time('extract & toBuffer');
-      return sharp(photo)
-        .extract(cropWindow)
-        .toBuffer()
-        .then((croppedPhoto) => {
-          console.timeEnd('extract & toBuffer');
-          return {
-            photo: croppedPhoto,
-            encoding,
-            size: cropWindow,
-          };
-        });
+      return {
+        cropPromise: sharp(photo)
+          .extract(cropWindow)
+          .toBuffer()
+          .then((croppedPhoto) => {
+            console.timeEnd('extract & toBuffer');
+            return {
+              photo: croppedPhoto,
+              encoding,
+              size: cropWindow,
+            };
+          }),
+      };
     });
 }
 
