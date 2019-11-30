@@ -1,0 +1,24 @@
+name: linting
+
+on: [push]
+
+jobs:
+  checkout:
+    name: Checkout
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+  install:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    needs: [checkout]
+    steps:
+      - env:
+          NODE_ENV: development
+        run: npm install
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    needs: [install]
+    steps:
+    - run: npm run lint
