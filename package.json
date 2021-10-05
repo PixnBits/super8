@@ -18,7 +18,7 @@
   "dependencies": {
     "@serialport/parser-readline": "^2.0.2",
     "fastify": "^2.10.0",
-    "fastify-static": "^2.5.0",
+    "fastify-static": "^4.2.4",
     "fastify-ws": "^1.0.3",
     "serialport": "^7.1.5",
     "sharp": "^0.23.1"
