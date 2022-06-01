@@ -21,7 +21,7 @@
     "fastify-static": "^2.5.0",
     "fastify-ws": "^1.0.3",
     "serialport": "^7.1.5",
-    "sharp": "^0.23.1"
+    "sharp": "^0.30.5"
   },
   "devDependencies": {
     "bootstrap": "^4.3.1",
